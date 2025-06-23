@@ -17,14 +17,17 @@ const GameDisplay = ({ multiplier, isFlying, gameStarted, cashedOut, currentBet 
         <div className="relative h-96 bg-gradient-to-b from-sky-900/40 to-blue-800/40 rounded-lg overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-transparent to-transparent"></div>
           
-          <div className={`absolute transition-all duration-1000 ${isFlying ? 'transform translate-x-full -translate-y-32 scale-150' : 'bottom-20 left-10'}`}>
-            <div className={`relative ${isFlying ? 'animate-pulse' : ''}`}>
-              <Plane className={`w-16 h-16 text-white ${isFlying ? 'rotate-45' : 'rotate-12'} transition-transform duration-1000 drop-shadow-2xl`} />
-              {isFlying && (
-                <div className="absolute -bottom-2 -left-2 w-20 h-20 bg-gradient-to-r from-blue-400/30 to-cyan-400/30 rounded-full blur-xl animate-pulse"></div>
-              )}
+          {/* Plane - show when game is started and flying */}
+          {gameStarted && (
+            <div className={`absolute transition-all duration-1000 ${isFlying ? 'bottom-32 left-1/2 transform -translate-x-1/2' : 'bottom-20 left-10'}`}>
+              <div className={`relative ${isFlying ? 'animate-bounce' : ''}`}>
+                <Plane className={`w-16 h-16 text-white ${isFlying ? 'rotate-45' : 'rotate-12'} transition-transform duration-1000 drop-shadow-2xl`} />
+                {isFlying && (
+                  <div className="absolute -bottom-2 -left-2 w-20 h-20 bg-gradient-to-r from-blue-400/30 to-cyan-400/30 rounded-full blur-xl animate-pulse"></div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
           
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
             <div className={`text-7xl font-bold transition-all duration-200 ${gameStarted ? 'text-transparent bg-gradient-to-r from-green-400 via-blue-400 to-purple-400 bg-clip-text scale-110 animate-pulse' : 'text-white'} drop-shadow-2xl`}>
