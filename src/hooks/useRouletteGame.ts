@@ -70,26 +70,28 @@ export const useRouletteGame = () => {
     // Generate result first
     const resultNumber = Math.floor(Math.random() * 37);
     
-    // Realistic ball spinning animation
-    let currentPosition = ballPosition;
-    let speed = 25; // Initial high speed
-    let deceleration = 0.98; // Gradual slowdown
+    // Calculate final ball position based on result
+    const finalBallPosition = (resultNumber * (360 / 37)) + Math.random() * 8 - 4; // Small random offset
+    
+    // Realistic ball spinning animation - multiple full rotations before settling
+    let currentPosition = 0;
+    let speed = 15; // Initial speed
+    const deceleration = 0.985; // Gradual slowdown
     let spinCount = 0;
-    const maxSpins = 120; // About 4 seconds of spinning
+    const maxSpins = 180; // About 4.5 seconds of spinning
     
     const ballSpinInterval = setInterval(() => {
       currentPosition = (currentPosition + speed) % 360;
       setBallPosition(currentPosition);
-      speed *= deceleration; // Gradually slow down
+      speed *= deceleration;
       spinCount++;
       
-      // Stop when speed is very low or max spins reached
-      if (speed < 1 || spinCount >= maxSpins) {
+      // Stop when we've done enough spins and speed is low
+      if (spinCount >= maxSpins || speed < 0.5) {
         clearInterval(ballSpinInterval);
         
-        // Final position based on result
-        const finalPosition = resultNumber * (360 / 37) + Math.random() * 5 - 2.5; // Add slight randomness
-        setBallPosition(finalPosition);
+        // Set final position
+        setBallPosition(finalBallPosition);
         setResult(resultNumber);
         setSpinning(false);
         
@@ -130,7 +132,7 @@ export const useRouletteGame = () => {
           setResult(null);
         }, 5000);
       }
-    }, 50); // Smooth 20fps animation
+    }, 30); // Smoother 33fps animation
   };
 
   return {
