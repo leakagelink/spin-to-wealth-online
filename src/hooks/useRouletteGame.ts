@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { BetOption, GameHistoryEntry, RouletteGameState } from "@/types/roulette";
@@ -70,27 +69,25 @@ export const useRouletteGame = () => {
     // Generate result first
     const resultNumber = Math.floor(Math.random() * 37);
     
-    // Calculate final ball position based on result
-    const finalBallPosition = (resultNumber * (360 / 37)) + Math.random() * 8 - 4; // Small random offset
-    
-    // Realistic ball spinning animation - multiple full rotations before settling
-    let currentPosition = 0;
-    let speed = 15; // Initial speed
-    const deceleration = 0.985; // Gradual slowdown
-    let spinCount = 0;
-    const maxSpins = 180; // About 4.5 seconds of spinning
+    // Ball spinning animation - multiple rotations with realistic physics
+    let currentBallPosition = 0;
+    let ballSpeed = 20; // Initial ball speed
+    const ballDeceleration = 0.98; // Gradual slowdown for ball
+    let ballSpinCount = 0;
+    const maxBallSpins = 150; // Ball spinning duration
     
     const ballSpinInterval = setInterval(() => {
-      currentPosition = (currentPosition + speed) % 360;
-      setBallPosition(currentPosition);
-      speed *= deceleration;
-      spinCount++;
+      currentBallPosition = (currentBallPosition + ballSpeed) % 360;
+      setBallPosition(currentBallPosition);
+      ballSpeed *= ballDeceleration;
+      ballSpinCount++;
       
-      // Stop when we've done enough spins and speed is low
-      if (spinCount >= maxSpins || speed < 0.5) {
+      // Stop ball when we've done enough spins and speed is low
+      if (ballSpinCount >= maxBallSpins || ballSpeed < 1) {
         clearInterval(ballSpinInterval);
         
-        // Set final position
+        // Calculate final ball position based on result
+        const finalBallPosition = (resultNumber * (360 / 37)) + Math.random() * 8 - 4;
         setBallPosition(finalBallPosition);
         setResult(resultNumber);
         setSpinning(false);
@@ -132,7 +129,7 @@ export const useRouletteGame = () => {
           setResult(null);
         }, 5000);
       }
-    }, 30); // Smoother 33fps animation
+    }, 40); // Smoother animation
   };
 
   return {

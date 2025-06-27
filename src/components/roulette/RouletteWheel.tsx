@@ -18,35 +18,43 @@ const RouletteWheel = ({ numbers, getNumberColor, spinning, result, ballPosition
         <div className="absolute inset-0 rounded-full border-8 border-gradient-to-r from-yellow-400 via-yellow-600 to-yellow-400 bg-gradient-to-br from-yellow-500 via-yellow-600 to-yellow-700 shadow-2xl">
           {/* Middle ring with numbers */}
           <div className="absolute inset-3 rounded-full bg-gradient-to-br from-green-800 via-green-900 to-black border-4 border-yellow-500 overflow-hidden">
-            {/* Inner spinning wheel */}
+            {/* Inner spinning wheel - Now this spins with proper animation */}
             <div 
-              className="absolute inset-6 rounded-full bg-gradient-to-br from-red-900 via-black to-red-900 transition-all duration-[4000ms] ease-out overflow-hidden"
+              className="absolute inset-6 rounded-full bg-gradient-to-br from-red-900 via-black to-red-900 overflow-hidden transition-transform duration-[4000ms] ease-out"
               style={{
                 transform: spinning 
                   ? 'rotate(1800deg)' 
                   : `rotate(${result ? result * (360 / 37) : 0}deg)`
               }}
             >
-              {/* Number segments positioned inside the wheel */}
+              {/* Number segments positioned around the wheel */}
               {numbers.map((num, index) => {
                 const angle = (index * 360) / 37;
                 const color = getNumberColor(num);
                 return (
                   <div
                     key={num}
-                    className={`absolute w-7 h-7 flex items-center justify-center text-xs font-bold text-white rounded-full border border-yellow-300 shadow-md ${
-                      color === 'red' ? 'bg-gradient-to-br from-red-500 to-red-700' : 
-                      color === 'black' ? 'bg-gradient-to-br from-gray-800 to-black' : 
-                      'bg-gradient-to-br from-green-500 to-green-700'
-                    }`}
+                    className="absolute"
                     style={{
                       position: 'absolute',
                       top: '50%',
                       left: '50%',
-                      transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(-80px) rotate(-${angle}deg)`,
+                      transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(-120px)`,
+                      transformOrigin: 'center',
                     }}
                   >
-                    {num}
+                    <div
+                      className={`w-8 h-8 flex items-center justify-center text-sm font-bold text-white rounded-full border border-yellow-300 shadow-md ${
+                        color === 'red' ? 'bg-gradient-to-br from-red-500 to-red-700' : 
+                        color === 'black' ? 'bg-gradient-to-br from-gray-800 to-black' : 
+                        'bg-gradient-to-br from-green-500 to-green-700'
+                      }`}
+                      style={{
+                        transform: `rotate(-${angle}deg)`,
+                      }}
+                    >
+                      {num}
+                    </div>
                   </div>
                 );
               })}
@@ -57,7 +65,7 @@ const RouletteWheel = ({ numbers, getNumberColor, spinning, result, ballPosition
               </div>
             </div>
             
-            {/* Ball positioned inside the wheel track */}
+            {/* Ball - spins independently on the outer track */}
             <div 
               className={`absolute w-4 h-4 rounded-full shadow-xl transition-all duration-100 ${
                 spinning ? 'animate-pulse' : ''
@@ -67,11 +75,11 @@ const RouletteWheel = ({ numbers, getNumberColor, spinning, result, ballPosition
                 position: 'absolute',
                 top: '50%',
                 left: '50%',
-                transform: `translate(-50%, -50%) rotate(${ballPosition}deg) translateY(-110px)`,
+                transform: `translate(-50%, -50%) rotate(${ballPosition}deg) translateY(-135px)`,
                 boxShadow: spinning 
                   ? '0 0 15px rgba(255, 255, 255, 0.9), inset 0 1px 3px rgba(0, 0, 0, 0.4)' 
                   : '0 2px 6px rgba(0, 0, 0, 0.5), inset 0 1px 3px rgba(0, 0, 0, 0.4)',
-                zIndex: 10,
+                zIndex: 20,
               }}
             >
               <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white via-gray-100 to-gray-300 shadow-inner"></div>
@@ -79,7 +87,7 @@ const RouletteWheel = ({ numbers, getNumberColor, spinning, result, ballPosition
           </div>
           
           {/* Wheel pointer */}
-          <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-8 border-l-transparent border-r-transparent border-b-yellow-400 z-10 drop-shadow-lg"></div>
+          <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-8 border-l-transparent border-r-transparent border-b-yellow-400 z-30 drop-shadow-lg"></div>
         </div>
       </div>
       
