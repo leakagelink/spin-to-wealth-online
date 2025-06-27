@@ -65,59 +65,72 @@ export const useRouletteGame = () => {
 
     setBalance(balance - bet);
     setSpinning(true);
+    setResult(null);
     
-    // Animate ball spinning
+    // Generate result first
+    const resultNumber = Math.floor(Math.random() * 37);
+    
+    // Realistic ball spinning animation
+    let currentPosition = ballPosition;
+    let speed = 25; // Initial high speed
+    let deceleration = 0.98; // Gradual slowdown
     let spinCount = 0;
-    const spinInterval = setInterval(() => {
-      setBallPosition((prev) => (prev + 10) % 360);
-      spinCount++;
-      if (spinCount > 30) {
-        clearInterval(spinInterval);
-      }
-    }, 100);
+    const maxSpins = 120; // About 4 seconds of spinning
     
-    setTimeout(() => {
-      const resultNumber = Math.floor(Math.random() * 37);
-      setResult(resultNumber);
-      setSpinning(false);
-      setBallPosition(resultNumber * (360 / 37));
+    const ballSpinInterval = setInterval(() => {
+      currentPosition = (currentPosition + speed) % 360;
+      setBallPosition(currentPosition);
+      speed *= deceleration; // Gradually slow down
+      spinCount++;
       
-      const selectedBetOption = betOptions.find(option => option.value === selectedBet);
-      const isWin = checkWin(resultNumber, selectedBet);
-      
-      const historyEntry: GameHistoryEntry = {
-        id: Date.now().toString(),
-        game: "Roulette",
-        bet: bet,
-        result: `${resultNumber} (${getNumberColor(resultNumber)})`,
-        payout: isWin && selectedBetOption ? (bet * selectedBetOption.multiplier) - bet : -bet,
-        timestamp: new Date(),
-        status: isWin ? 'win' : 'loss'
-      };
-      
-      setGameHistory(prev => [historyEntry, ...prev]);
-      
-      if (isWin && selectedBetOption) {
-        const winnings = bet * selectedBetOption.multiplier;
-        setBalance(balance + winnings);
-        toast({
-          title: "🎉 You won!",
-          description: `Number ${resultNumber} (${getNumberColor(resultNumber)}) - Won ₹${winnings - bet}`,
-        });
-      } else {
-        toast({
-          title: "Better luck next time!",
-          description: `Number ${resultNumber} (${getNumberColor(resultNumber)}) - Lost ₹${bet}`,
-          variant: "destructive",
-        });
+      // Stop when speed is very low or max spins reached
+      if (speed < 1 || spinCount >= maxSpins) {
+        clearInterval(ballSpinInterval);
+        
+        // Final position based on result
+        const finalPosition = resultNumber * (360 / 37) + Math.random() * 5 - 2.5; // Add slight randomness
+        setBallPosition(finalPosition);
+        setResult(resultNumber);
+        setSpinning(false);
+        
+        const selectedBetOption = betOptions.find(option => option.value === selectedBet);
+        const isWin = checkWin(resultNumber, selectedBet);
+        
+        const historyEntry: GameHistoryEntry = {
+          id: Date.now().toString(),
+          game: "Roulette",
+          bet: bet,
+          result: `${resultNumber} (${getNumberColor(resultNumber)})`,
+          payout: isWin && selectedBetOption ? (bet * selectedBetOption.multiplier) - bet : -bet,
+          timestamp: new Date(),
+          status: isWin ? 'win' : 'loss'
+        };
+        
+        setGameHistory(prev => [historyEntry, ...prev]);
+        
+        if (isWin && selectedBetOption) {
+          const winnings = bet * selectedBetOption.multiplier;
+          setBalance(balance + winnings);
+          toast({
+            title: "🎉 Congratulations! You Won!",
+            description: `Number ${resultNumber} (${getNumberColor(resultNumber)}) - Won ₹${winnings - bet}`,
+          });
+        } else {
+          toast({
+            title: "Better luck next time!",
+            description: `Number ${resultNumber} (${getNumberColor(resultNumber)}) - Lost ₹${bet}`,
+            variant: "destructive",
+          });
+        }
+        
+        // Auto-clear after showing result
+        setTimeout(() => {
+          setBetAmount("");
+          setSelectedBet("");
+          setResult(null);
+        }, 5000);
       }
-      
-      setTimeout(() => {
-        setBetAmount("");
-        setSelectedBet("");
-        setResult(null);
-      }, 3000);
-    }, 3000);
+    }, 50); // Smooth 20fps animation
   };
 
   return {
