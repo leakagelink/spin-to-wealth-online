@@ -20,15 +20,15 @@ const RouletteWheel = ({ numbers, getNumberColor, spinning, result, ballPosition
           <div className="absolute inset-3 rounded-full bg-gradient-to-br from-green-800 via-green-900 to-black border-4 border-yellow-500">
             {/* Inner spinning wheel */}
             <div 
-              className={`absolute inset-6 rounded-full bg-gradient-to-br from-red-900 via-black to-red-900 transition-all duration-500 ${
+              className={`absolute inset-6 rounded-full bg-gradient-to-br from-red-900 via-black to-red-900 transition-all duration-[4000ms] ease-out ${
                 spinning 
-                  ? 'animate-spin' 
+                  ? '' 
                   : ''
               }`}
               style={{
-                animationDuration: spinning ? '4s' : '0s',
-                animationTimingFunction: 'cubic-bezier(0.17, 0.67, 0.12, 1.00)',
-                transform: spinning ? 'rotate(1800deg)' : `rotate(${result ? result * (360 / 37) : 0}deg)`
+                transform: spinning 
+                  ? 'rotate(1800deg)' 
+                  : `rotate(${result ? result * (360 / 37) : 0}deg)`
               }}
             >
               {/* Number segments with better positioning */}
@@ -76,7 +76,6 @@ const RouletteWheel = ({ numbers, getNumberColor, spinning, result, ballPosition
               boxShadow: spinning 
                 ? '0 0 20px rgba(255, 255, 255, 0.8), inset 0 2px 4px rgba(0, 0, 0, 0.3)' 
                 : '0 4px 8px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(0, 0, 0, 0.3)',
-              animation: spinning ? 'bounce 0.3s infinite alternate' : 'none'
             }}
           >
             <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white via-gray-100 to-gray-300 shadow-inner"></div>
@@ -118,13 +117,6 @@ const RouletteWheel = ({ numbers, getNumberColor, spinning, result, ballPosition
           </div>
         )}
       </div>
-
-      <style jsx>{`
-        @keyframes bounce {
-          0% { transform: rotate(${ballPosition}deg) translateY(-160px) scale(1); }
-          100% { transform: rotate(${ballPosition}deg) translateY(-155px) scale(1.1); }
-        }
-      `}</style>
     </div>
   );
 };
