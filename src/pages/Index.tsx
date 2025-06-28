@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plane, Bomb, Palette, Grid3X3, Spade, Circle } from "lucide-react";
+import { Plane, Bomb, Palette, Grid3X3, Spade, Circle, Car, Zap, Rocket } from "lucide-react";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import GamesGrid from "@/components/GamesGrid";
@@ -24,11 +24,32 @@ const Index = () => {
       color: "from-blue-500 to-cyan-400"
     },
     {
+      id: "car-racing",
+      name: "Car Racing",
+      icon: Car,
+      description: "Race the car and cash out before it crashes!",
+      color: "from-red-500 to-orange-400"
+    },
+    {
+      id: "jetx",
+      name: "JetX",
+      icon: Rocket,
+      description: "Launch the jet and multiply your winnings!",
+      color: "from-blue-500 to-purple-400"
+    },
+    {
       id: "mines",
       name: "Bomb/Mines",
       icon: Bomb,
       description: "Navigate through the minefield and win big!",
       color: "from-red-500 to-orange-400"
+    },
+    {
+      id: "chicken",
+      name: "Chicken Game",
+      icon: Zap,
+      description: "Find chickens, avoid bones, multiply your bet!",
+      color: "from-yellow-500 to-orange-400"
     },
     {
       id: "color-prediction",

@@ -12,6 +12,9 @@ import GameColorPrediction from "./pages/GameColorPrediction";
 import GameTeenPatti from "./pages/GameTeenPatti";
 import GameBingo from "./pages/GameBingo";
 import GameRoulette from "./pages/GameRoulette";
+import GameCarRacing from "./pages/GameCarRacing";
+import GameChicken from "./pages/GameChicken";
+import GameJetX from "./pages/GameJetX";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,7 +29,10 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/game/aviator" element={<GameAviator />} />
+            <Route path="/game/car-racing" element={<GameCarRacing />} />
+            <Route path="/game/jetx" element={<GameJetX />} />
             <Route path="/game/mines" element={<GameMines />} />
+            <Route path="/game/chicken" element={<GameChicken />} />
             <Route path="/game/color-prediction" element={<GameColorPrediction />} />
             <Route path="/game/teen-patti" element={<GameTeenPatti />} />
             <Route path="/game/bingo" element={<GameBingo />} />

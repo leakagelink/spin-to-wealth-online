@@ -14,6 +14,7 @@ const GameBingo = () => {
   const [bingoCard, setBingoCard] = useState<Array<Array<{ number: number; marked: boolean }>>>([]);
   const [calledNumbers, setCalledNumbers] = useState<number[]>([]);
   const [currentNumber, setCurrentNumber] = useState<number | null>(null);
+  const [autoPlay, setAutoPlay] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -23,12 +24,14 @@ const GameBingo = () => {
       const row = [];
       for (let j = 0; j < 5; j++) {
         if (i === 2 && j === 2) {
-          // Free space in center
           row.push({ number: 0, marked: true });
         } else {
           const min = j * 15 + 1;
           const max = j * 15 + 15;
-          const number = Math.floor(Math.random() * (max - min + 1)) + min;
+          let number;
+          do {
+            number = Math.floor(Math.random() * (max - min + 1)) + min;
+          } while (card.flat().some(cell => cell && cell.number === number));
           row.push({ number, marked: false });
         }
       }
@@ -56,7 +59,7 @@ const GameBingo = () => {
     
     toast({
       title: "Bingo started!",
-      description: `You bet ₹${bet}. Mark your numbers!`,
+      description: `You bet ₹${bet}. Good luck!`,
     });
   };
 
@@ -70,9 +73,9 @@ const GameBingo = () => {
     
     const newNumber = availableNumbers[Math.floor(Math.random() * availableNumbers.length)];
     setCurrentNumber(newNumber);
-    setCalledNumbers([...calledNumbers, newNumber]);
+    const newCalledNumbers = [...calledNumbers, newNumber];
+    setCalledNumbers(newCalledNumbers);
     
-    // Auto-mark if number exists on card
     const newCard = bingoCard.map(row =>
       row.map(cell =>
         cell.number === newNumber ? { ...cell, marked: true } : cell
@@ -80,15 +83,14 @@ const GameBingo = () => {
     );
     setBingoCard(newCard);
     
-    // Check for bingo
-    checkForBingo(newCard);
+    checkForBingo(newCard, newCalledNumbers);
   };
 
-  const checkForBingo = (card: Array<Array<{ number: number; marked: boolean }>>) => {
+  const checkForBingo = (card: Array<Array<{ number: number; marked: boolean }>>, called: number[]) => {
     // Check rows
     for (let i = 0; i < 5; i++) {
       if (card[i].every(cell => cell.marked)) {
-        winGame();
+        winGame(called.length);
         return;
       }
     }
@@ -96,7 +98,7 @@ const GameBingo = () => {
     // Check columns
     for (let j = 0; j < 5; j++) {
       if (card.every(row => row[j].marked)) {
-        winGame();
+        winGame(called.length);
         return;
       }
     }
@@ -104,21 +106,40 @@ const GameBingo = () => {
     // Check diagonals
     if (card.every((row, i) => row[i].marked) || 
         card.every((row, i) => row[4 - i].marked)) {
-      winGame();
+      winGame(called.length);
       return;
     }
   };
 
-  const winGame = () => {
+  const winGame = (numbersUsed: number) => {
     const bet = parseFloat(betAmount);
-    const winnings = bet * 5;
+    const multiplier = Math.max(1, 5 - (numbersUsed / 15));
+    const winnings = Math.floor(bet * multiplier);
     setBalance(balance + winnings);
     setGameStarted(false);
+    setAutoPlay(false);
     
     toast({
       title: "BINGO!",
-      description: `You won ₹${winnings}!`,
+      description: `You won ₹${winnings - bet} with ${multiplier.toFixed(2)}x multiplier!`,
     });
+  };
+
+  const toggleAutoPlay = () => {
+    if (!gameStarted) return;
+    
+    if (!autoPlay) {
+      setAutoPlay(true);
+      const interval = setInterval(() => {
+        if (gameStarted && autoPlay) {
+          callNumber();
+        } else {
+          clearInterval(interval);
+        }
+      }, 1000);
+    } else {
+      setAutoPlay(false);
+    }
   };
 
   return (
@@ -139,7 +160,6 @@ const GameBingo = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Game Area */}
           <div className="lg:col-span-2">
             <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
               <CardContent className="p-6">
@@ -155,34 +175,37 @@ const GameBingo = () => {
                 </div>
                 
                 {bingoCard.length > 0 && (
-                  <div className="grid grid-cols-5 gap-2 max-w-md mx-auto">
-                    <div className="text-center font-bold">B</div>
-                    <div className="text-center font-bold">I</div>
-                    <div className="text-center font-bold">N</div>
-                    <div className="text-center font-bold">G</div>
-                    <div className="text-center font-bold">O</div>
+                  <div className="max-w-md mx-auto">
+                    <div className="grid grid-cols-5 gap-1 mb-2">
+                      <div className="text-center font-bold text-green-400">B</div>
+                      <div className="text-center font-bold text-green-400">I</div>
+                      <div className="text-center font-bold text-green-400">N</div>
+                      <div className="text-center font-bold text-green-400">G</div>
+                      <div className="text-center font-bold text-green-400">O</div>
+                    </div>
                     
-                    {bingoCard.map((row, rowIndex) =>
-                      row.map((cell, colIndex) => (
-                        <div
-                          key={`${rowIndex}-${colIndex}`}
-                          className={`w-12 h-12 rounded border-2 flex items-center justify-center text-sm font-bold ${
-                            cell.marked
-                              ? "bg-green-500 border-green-400 text-white"
-                              : "bg-gray-700 border-gray-600"
-                          }`}
-                        >
-                          {cell.number === 0 ? "FREE" : cell.number}
-                        </div>
-                      ))
-                    )}
+                    <div className="grid grid-cols-5 gap-1">
+                      {bingoCard.map((row, rowIndex) =>
+                        row.map((cell, colIndex) => (
+                          <div
+                            key={`${rowIndex}-${colIndex}`}
+                            className={`w-12 h-12 rounded border-2 flex items-center justify-center text-sm font-bold ${
+                              cell.marked
+                                ? "bg-green-500 border-green-400 text-white"
+                                : "bg-gray-700 border-gray-600"
+                            }`}
+                          >
+                            {cell.number === 0 ? "★" : cell.number}
+                          </div>
+                        ))
+                      )}
+                    </div>
                   </div>
                 )}
               </CardContent>
             </Card>
           </div>
 
-          {/* Control Panel */}
           <div className="space-y-6">
             <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
               <CardHeader>
@@ -232,12 +255,22 @@ const GameBingo = () => {
                     Start Bingo
                   </Button>
                 ) : (
-                  <Button
-                    onClick={callNumber}
-                    className="w-full bg-gradient-to-r from-blue-500 to-cyan-400 hover:from-blue-600 hover:to-cyan-500"
-                  >
-                    Call Next Number
-                  </Button>
+                  <div className="space-y-2">
+                    <Button
+                      onClick={callNumber}
+                      className="w-full bg-gradient-to-r from-blue-500 to-cyan-400 hover:from-blue-600 hover:to-cyan-500"
+                      disabled={autoPlay}
+                    >
+                      Call Next Number
+                    </Button>
+                    <Button
+                      onClick={toggleAutoPlay}
+                      variant="outline"
+                      className="w-full border-gray-600 hover:bg-gray-700"
+                    >
+                      {autoPlay ? "Stop Auto Play" : "Start Auto Play"}
+                    </Button>
+                  </div>
                 )}
               </CardContent>
             </Card>
