@@ -21,14 +21,37 @@ export const useAviatorGame = () => {
     if (gameStarted && !cashedOut) {
       interval = setInterval(() => {
         setMultiplier((prev) => {
-          const increase = Math.random() * 0.05 + 0.01;
+          // More realistic multiplier increase - slower at start, faster as it goes higher
+          const baseIncrease = 0.01;
+          const accelerationFactor = Math.pow((prev - 1) * 0.5 + 1, 1.2);
+          const randomVariation = Math.random() * 0.02 + 0.005;
+          const increase = baseIncrease * accelerationFactor + randomVariation;
+          
           const newMultiplier = prev + increase;
           
           if (newMultiplier > highestMultiplier) {
             setHighestMultiplier(newMultiplier);
           }
           
-          const crashProbability = Math.min((newMultiplier - 1) * 0.1, 0.3);
+          // More realistic crash probability - increases exponentially
+          let crashProbability;
+          if (newMultiplier < 1.5) {
+            crashProbability = 0.001; // Very low chance early on
+          } else if (newMultiplier < 2.0) {
+            crashProbability = 0.005;
+          } else if (newMultiplier < 3.0) {
+            crashProbability = 0.015;
+          } else if (newMultiplier < 5.0) {
+            crashProbability = 0.03;
+          } else if (newMultiplier < 10.0) {
+            crashProbability = 0.06;
+          } else {
+            crashProbability = 0.12; // Higher chance at very high multipliers
+          }
+          
+          // Add some randomness to make it less predictable
+          crashProbability += Math.random() * 0.01;
+          
           if (Math.random() < crashProbability) {
             setGameStarted(false);
             setIsFlying(false);
@@ -46,7 +69,7 @@ export const useAviatorGame = () => {
             
             if (!cashedOut && currentBet > 0) {
               toast({
-                title: "✈️ Plane Crashed!",
+                title: "💥 Plane Crashed!",
                 description: `Crashed at ${newMultiplier.toFixed(2)}x - Lost ₹${currentBet}`,
                 variant: "destructive",
               });
@@ -55,11 +78,11 @@ export const useAviatorGame = () => {
               setMultiplier(1.00);
               setCurrentBet(0);
               setCashedOut(false);
-            }, 2000);
+            }, 3000); // Longer delay to show crash effect
           }
           return newMultiplier;
         });
-      }, 100);
+      }, 80); // Slightly faster updates for smoother animation
     }
 
     return () => clearInterval(interval);
