@@ -5,26 +5,86 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/components/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface AuthDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onLogin: (credentials: { email: string; password: string }) => void;
-  onRegister: (userData: { name: string; email: string; password: string; phone: string }) => void;
 }
 
-const AuthDialog = ({ open, onOpenChange, onLogin, onRegister }: AuthDialogProps) => {
+const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [registerData, setRegisterData] = useState({ name: "", email: "", password: "", phone: "" });
+  const [loading, setLoading] = useState(false);
+  const { signIn, signUp } = useAuth();
+  const { toast } = useToast();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    onLogin(loginData);
+    setLoading(true);
+    
+    try {
+      const { error } = await signIn(loginData.email, loginData.password);
+      
+      if (error) {
+        toast({
+          title: "Login Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Welcome back!",
+          description: "You have successfully logged in.",
+        });
+        onOpenChange(false);
+        setLoginData({ email: "", password: "" });
+      }
+    } catch (error) {
+      toast({
+        title: "Login Error",
+        description: "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    onRegister(registerData);
+    setLoading(true);
+    
+    try {
+      const { error } = await signUp(registerData.email, registerData.password, {
+        name: registerData.name,
+        phone: registerData.phone
+      });
+      
+      if (error) {
+        toast({
+          title: "Registration Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Registration successful!",
+          description: "Please check your email to verify your account.",
+        });
+        onOpenChange(false);
+        setRegisterData({ name: "", email: "", password: "", phone: "" });
+      }
+    } catch (error) {
+      toast({
+        title: "Registration Error",
+        description: "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -51,6 +111,7 @@ const AuthDialog = ({ open, onOpenChange, onLogin, onRegister }: AuthDialogProps
                   onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                   className="bg-gray-700 border-gray-600"
                   required
+                  disabled={loading}
                 />
               </div>
               <div>
@@ -62,10 +123,15 @@ const AuthDialog = ({ open, onOpenChange, onLogin, onRegister }: AuthDialogProps
                   onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                   className="bg-gray-700 border-gray-600"
                   required
+                  disabled={loading}
                 />
               </div>
-              <Button type="submit" className="w-full bg-gradient-to-r from-blue-500 to-cyan-400">
-                Login
+              <Button 
+                type="submit" 
+                className="w-full bg-gradient-to-r from-blue-500 to-cyan-400"
+                disabled={loading}
+              >
+                {loading ? "Logging in..." : "Login"}
               </Button>
             </form>
           </TabsContent>
@@ -80,6 +146,7 @@ const AuthDialog = ({ open, onOpenChange, onLogin, onRegister }: AuthDialogProps
                   onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
                   className="bg-gray-700 border-gray-600"
                   required
+                  disabled={loading}
                 />
               </div>
               <div>
@@ -91,6 +158,7 @@ const AuthDialog = ({ open, onOpenChange, onLogin, onRegister }: AuthDialogProps
                   onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
                   className="bg-gray-700 border-gray-600"
                   required
+                  disabled={loading}
                 />
               </div>
               <div>
@@ -102,6 +170,7 @@ const AuthDialog = ({ open, onOpenChange, onLogin, onRegister }: AuthDialogProps
                   onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })}
                   className="bg-gray-700 border-gray-600"
                   required
+                  disabled={loading}
                 />
               </div>
               <div>
@@ -113,10 +182,15 @@ const AuthDialog = ({ open, onOpenChange, onLogin, onRegister }: AuthDialogProps
                   onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
                   className="bg-gray-700 border-gray-600"
                   required
+                  disabled={loading}
                 />
               </div>
-              <Button type="submit" className="w-full bg-gradient-to-r from-green-500 to-emerald-400">
-                Register
+              <Button 
+                type="submit" 
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-400"
+                disabled={loading}
+              >
+                {loading ? "Registering..." : "Register"}
               </Button>
             </form>
           </TabsContent>

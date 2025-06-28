@@ -1,24 +1,19 @@
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
+import { Plane, Bomb, Palette, Grid3X3, Spade, Circle } from "lucide-react";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import GamesGrid from "@/components/GamesGrid";
 import WalletSection from "@/components/WalletSection";
 import AuthDialog from "@/components/AuthDialog";
-import { Plane, Bomb, Palette, Grid3X3, Spade, Circle } from "lucide-react";
+import { useAuth } from "@/components/AuthContext";
+import { useState } from "react";
 
 const Index = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userBalance, setUserBalance] = useState(0);
+  const { user, loading, signOut } = useAuth();
   const [showAuthDialog, setShowAuthDialog] = useState(false);
-  const { toast } = useToast();
+  const [userBalance, setUserBalance] = useState(1000);
 
   const games = [
     {
@@ -65,52 +60,29 @@ const Index = () => {
     }
   ];
 
-  const handleLogin = (credentials: { email: string; password: string }) => {
-    // Simulate login
-    console.log("Login attempt:", credentials);
-    setIsLoggedIn(true);
-    setUserBalance(1000); // Demo balance
-    setShowAuthDialog(false);
-    toast({
-      title: "Welcome back!",
-      description: "You have successfully logged in.",
-    });
-  };
-
-  const handleRegister = (userData: { name: string; email: string; password: string; phone: string }) => {
-    // Simulate registration
-    console.log("Registration attempt:", userData);
-    setIsLoggedIn(true);
-    setUserBalance(0);
-    setShowAuthDialog(false);
-    toast({
-      title: "Registration successful!",
-      description: "Welcome to the platform!",
-    });
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white flex items-center justify-center">
+        <div className="text-xl">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white">
       <Header 
-        isLoggedIn={isLoggedIn} 
+        isLoggedIn={!!user} 
         userBalance={userBalance}
         onAuthClick={() => setShowAuthDialog(true)}
-        onLogout={() => {
-          setIsLoggedIn(false);
-          setUserBalance(0);
-          toast({
-            title: "Logged out",
-            description: "You have been successfully logged out.",
-          });
-        }}
+        onLogout={signOut}
       />
       
       <Hero onGetStarted={() => setShowAuthDialog(true)} />
       
       <div className="container mx-auto px-4 py-12">
-        <GamesGrid games={games} isLoggedIn={isLoggedIn} />
+        <GamesGrid games={games} isLoggedIn={!!user} />
         
-        {isLoggedIn && (
+        {user && (
           <WalletSection 
             balance={userBalance} 
             onBalanceUpdate={setUserBalance}
@@ -121,8 +93,6 @@ const Index = () => {
       <AuthDialog
         open={showAuthDialog}
         onOpenChange={setShowAuthDialog}
-        onLogin={handleLogin}
-        onRegister={handleRegister}
       />
     </div>
   );
