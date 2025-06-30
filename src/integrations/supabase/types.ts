@@ -9,13 +9,152 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          full_name: string | null
+          id: string
+          phone: string | null
+          referral_code: string | null
+          referred_by: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referrals: {
+        Row: {
+          created_at: string | null
+          earning_amount: number | null
+          id: string
+          referred_id: string
+          referrer_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          earning_amount?: number | null
+          id?: string
+          referred_id: string
+          referrer_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string | null
+          earning_amount?: number | null
+          id?: string
+          referred_id?: string
+          referrer_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          method: string
+          notes: string | null
+          status: string
+          transaction_id: string | null
+          type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          method: string
+          notes?: string | null
+          status?: string
+          transaction_id?: string | null
+          type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          method?: string
+          notes?: string | null
+          status?: string
+          transaction_id?: string | null
+          type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallets: {
+        Row: {
+          balance: number | null
+          bonus_balance: number | null
+          id: string
+          total_deposited: number | null
+          total_withdrawn: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          balance?: number | null
+          bonus_balance?: number | null
+          id?: string
+          total_deposited?: number | null
+          total_withdrawn?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          balance?: number | null
+          bonus_balance?: number | null
+          id?: string
+          total_deposited?: number | null
+          total_withdrawn?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_referral_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

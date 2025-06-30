@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/components/AuthContext";
 import Index from "./pages/Index";
+import Profile from "./pages/Profile";
 import GameAviator from "./pages/GameAviator";
 import GameMines from "./pages/GameMines";
 import GameColorPrediction from "./pages/GameColorPrediction";
@@ -28,6 +29,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="/game/aviator" element={<GameAviator />} />
             <Route path="/game/car-racing" element={<GameCarRacing />} />
             <Route path="/game/jetx" element={<GameJetX />} />

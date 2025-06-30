@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/components/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Wallet, Plus, Minus, Smartphone, QrCode, CreditCard } from "lucide-react";
 
 interface WalletSectionProps {
@@ -15,14 +17,43 @@ interface WalletSectionProps {
 }
 
 const WalletSection = ({ balance, onBalanceUpdate }: WalletSectionProps) => {
+  const { user } = useAuth();
   const [depositAmount, setDepositAmount] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [transactionId, setTransactionId] = useState("");
   const [showDepositDialog, setShowDepositDialog] = useState(false);
   const [showWithdrawDialog, setShowWithdrawDialog] = useState(false);
+  const [wallet, setWallet] = useState(null);
   const { toast } = useToast();
 
-  const handleDeposit = (method: string) => {
+  useEffect(() => {
+    if (user) {
+      fetchWallet();
+    }
+  }, [user]);
+
+  const fetchWallet = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('wallets')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      if (data) {
+        setWallet(data);
+        onBalanceUpdate(Number(data.balance));
+      }
+    } catch (error) {
+      console.error('Error fetching wallet:', error);
+    }
+  };
+
+  const handleDeposit = async (method: string) => {
     if (!depositAmount || parseFloat(depositAmount) <= 0) {
       toast({
         title: "Invalid amount",
@@ -32,18 +63,39 @@ const WalletSection = ({ balance, onBalanceUpdate }: WalletSectionProps) => {
       return;
     }
 
-    // Simulate deposit request
-    toast({
-      title: "Deposit request submitted",
-      description: `Your ${method} deposit request for ₹${depositAmount} has been submitted for admin approval.`,
-    });
+    try {
+      const { error } = await supabase
+        .from('transactions')
+        .insert({
+          user_id: user.id,
+          type: 'deposit',
+          amount: parseFloat(depositAmount),
+          method: method,
+          transaction_id: transactionId || null,
+          status: 'pending'
+        });
 
-    setDepositAmount("");
-    setTransactionId("");
-    setShowDepositDialog(false);
+      if (error) throw error;
+
+      toast({
+        title: "Deposit request submitted",
+        description: `Your ${method} deposit request for ₹${depositAmount} has been submitted for admin approval.`,
+      });
+
+      setDepositAmount("");
+      setTransactionId("");
+      setShowDepositDialog(false);
+    } catch (error) {
+      console.error('Error submitting deposit:', error);
+      toast({
+        title: "Error",
+        description: "Failed to submit deposit request",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleWithdraw = () => {
+  const handleWithdraw = async () => {
     if (!withdrawAmount || parseFloat(withdrawAmount) <= 0) {
       toast({
         title: "Invalid amount",
@@ -62,15 +114,37 @@ const WalletSection = ({ balance, onBalanceUpdate }: WalletSectionProps) => {
       return;
     }
 
-    // Simulate withdrawal request
-    toast({
-      title: "Withdrawal request submitted",
-      description: `Your withdrawal request for ₹${withdrawAmount} has been submitted for admin approval.`,
-    });
+    try {
+      const { error } = await supabase
+        .from('transactions')
+        .insert({
+          user_id: user.id,
+          type: 'withdrawal',
+          amount: parseFloat(withdrawAmount),
+          method: 'Bank Transfer',
+          status: 'pending'
+        });
 
-    setWithdrawAmount("");
-    setShowWithdrawDialog(false);
+      if (error) throw error;
+
+      toast({
+        title: "Withdrawal request submitted",
+        description: `Your withdrawal request for ₹${withdrawAmount} has been submitted for admin approval.`,
+      });
+
+      setWithdrawAmount("");
+      setShowWithdrawDialog(false);
+    } catch (error) {
+      console.error('Error submitting withdrawal:', error);
+      toast({
+        title: "Error",
+        description: "Failed to submit withdrawal request",
+        variant: "destructive",
+      });
+    }
   };
+
+  const displayBalance = wallet?.balance ? Number(wallet.balance) : balance;
 
   return (
     <section className="py-12">
@@ -83,8 +157,13 @@ const WalletSection = ({ balance, onBalanceUpdate }: WalletSectionProps) => {
         </CardHeader>
         <CardContent>
           <div className="text-center mb-8">
-            <div className="text-4xl font-bold text-green-400 mb-2">₹{balance.toLocaleString()}</div>
+            <div className="text-4xl font-bold text-green-400 mb-2">₹{displayBalance.toLocaleString()}</div>
             <p className="text-gray-400">Available Balance</p>
+            {wallet?.bonus_balance && Number(wallet.bonus_balance) > 0 && (
+              <p className="text-yellow-400 text-sm mt-2">
+                Bonus: ₹{Number(wallet.bonus_balance).toLocaleString()}
+              </p>
+            )}
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -227,7 +306,7 @@ const WalletSection = ({ balance, onBalanceUpdate }: WalletSectionProps) => {
                     />
                   </div>
                   <p className="text-sm text-gray-400">
-                    Available balance: ₹{balance.toLocaleString()}
+                    Available balance: ₹{displayBalance.toLocaleString()}
                   </p>
                   <Button onClick={handleWithdraw} className="w-full">
                     Submit Withdrawal Request

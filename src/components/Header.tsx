@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
-import { Wallet, LogOut, User } from "lucide-react";
+import { Wallet, LogOut, User, UserCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface HeaderProps {
   isLoggedIn: boolean;
@@ -10,10 +11,12 @@ interface HeaderProps {
 }
 
 const Header = ({ isLoggedIn, userBalance, onAuthClick, onLogout }: HeaderProps) => {
+  const navigate = useNavigate();
+
   return (
     <header className="bg-gray-900/80 backdrop-blur-lg border-b border-gray-700 sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate('/')}>
           <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-sm">G</span>
           </div>
@@ -29,6 +32,15 @@ const Header = ({ isLoggedIn, userBalance, onAuthClick, onLogout }: HeaderProps)
                 <Wallet className="w-4 h-4 text-green-400" />
                 <span className="text-green-400 font-semibold">₹{userBalance.toLocaleString()}</span>
               </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => navigate('/profile')} 
+                className="border-gray-600 hover:bg-gray-700"
+              >
+                <UserCircle className="w-4 h-4 mr-2" />
+                Profile
+              </Button>
               <Button variant="outline" size="sm" onClick={onLogout} className="border-gray-600 hover:bg-gray-700">
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout
