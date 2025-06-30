@@ -8,7 +8,8 @@ import GamesGrid from "@/components/GamesGrid";
 import WalletSection from "@/components/WalletSection";
 import AuthDialog from "@/components/AuthDialog";
 import { useAuth } from "@/components/AuthContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const { user, loading, signOut } = useAuth();
@@ -80,6 +81,34 @@ const Index = () => {
       color: "from-indigo-500 to-blue-400"
     }
   ];
+
+  // Fetch wallet balance when user is available
+  useEffect(() => {
+    if (user) {
+      fetchWalletBalance();
+    }
+  }, [user]);
+
+  const fetchWalletBalance = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('wallets')
+        .select('balance')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching wallet balance:', error);
+        return;
+      }
+
+      if (data) {
+        setUserBalance(Number(data.balance));
+      }
+    } catch (error) {
+      console.error('Error fetching wallet balance:', error);
+    }
+  };
 
   if (loading) {
     return (

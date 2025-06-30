@@ -36,12 +36,17 @@ const Header = ({ isLoggedIn, userBalance, onAuthClick, onLogout }: HeaderProps)
                 variant="outline" 
                 size="sm" 
                 onClick={() => navigate('/profile')} 
-                className="border-gray-600 hover:bg-gray-700"
+                className="border-gray-600 hover:bg-gray-700 text-gray-200 hover:text-white"
               >
                 <UserCircle className="w-4 h-4 mr-2" />
                 Profile
               </Button>
-              <Button variant="outline" size="sm" onClick={onLogout} className="border-gray-600 hover:bg-gray-700">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={onLogout} 
+                className="border-gray-600 hover:bg-gray-700 text-gray-200 hover:text-white"
+              >
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout
               </Button>

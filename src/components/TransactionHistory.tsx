@@ -2,17 +2,19 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAuth } from "@/components/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowUpCircle, ArrowDownCircle } from "lucide-react";
+import { ArrowUpCircle, ArrowDownCircle, RefreshCw } from "lucide-react";
 
 const TransactionHistory = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -22,6 +24,7 @@ const TransactionHistory = () => {
 
   const fetchTransactions = async () => {
     try {
+      setRefreshing(true);
       const { data, error } = await supabase
         .from('transactions')
         .select('*')
@@ -39,7 +42,12 @@ const TransactionHistory = () => {
       });
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  const handleRefresh = () => {
+    fetchTransactions();
   };
 
   const getStatusColor = (status) => {
@@ -75,8 +83,17 @@ const TransactionHistory = () => {
 
   return (
     <Card className="bg-gray-800/50 border-gray-700">
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Transaction History</CardTitle>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className="border-gray-600 hover:bg-gray-700"
+        >
+          <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+        </Button>
       </CardHeader>
       <CardContent>
         {transactions.length === 0 ? (

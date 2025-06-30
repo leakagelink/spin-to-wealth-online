@@ -45,7 +45,7 @@ const Profile = () => {
         throw profileError;
       }
 
-      // Fetch wallet
+      // Fetch wallet with fresh data
       const { data: walletData, error: walletError } = await supabase
         .from('wallets')
         .select('*')
@@ -111,6 +111,13 @@ const Profile = () => {
     }
   };
 
+  // Refresh data when switching tabs
+  const handleTabChange = (tab) => {
+    if (tab === 'history') {
+      fetchUserData(); // Refresh data when viewing transaction history
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white flex items-center justify-center">
@@ -127,7 +134,7 @@ const Profile = () => {
             variant="outline"
             size="sm"
             onClick={() => navigate('/')}
-            className="mr-4 border-gray-600 hover:bg-gray-700"
+            className="mr-4 border-gray-600 hover:bg-gray-700 text-gray-200 hover:text-white"
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
@@ -181,7 +188,7 @@ const Profile = () => {
           </Card>
         </div>
 
-        <Tabs defaultValue="profile" className="w-full">
+        <Tabs defaultValue="profile" className="w-full" onValueChange={handleTabChange}>
           <TabsList className="grid w-full grid-cols-3 bg-gray-700">
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="history">Transaction History</TabsTrigger>
