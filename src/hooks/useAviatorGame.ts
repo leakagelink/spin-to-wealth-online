@@ -1,9 +1,11 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { GameHistoryEntry, AviatorGameState } from "@/types/aviator";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/components/AuthContext";
 
 export const useAviatorGame = () => {
+  const { user } = useAuth();
   const [betAmount, setBetAmount] = useState("");
   const [multiplier, setMultiplier] = useState(1.00);
   const [isFlying, setIsFlying] = useState(false);
@@ -14,6 +16,43 @@ export const useAviatorGame = () => {
   const [gameHistory, setGameHistory] = useState<GameHistoryEntry[]>([]);
   const [highestMultiplier, setHighestMultiplier] = useState(1.00);
   const { toast } = useToast();
+
+  // Fetch initial wallet balance
+  useEffect(() => {
+    if (user) {
+      fetchWalletBalance();
+    }
+  }, [user]);
+
+  const fetchWalletBalance = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('wallets')
+        .select('balance')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) throw error;
+      if (data) {
+        setBalance(Number(data.balance));
+      }
+    } catch (error) {
+      console.error('Error fetching wallet balance:', error);
+    }
+  };
+
+  const updateWalletBalance = async (newBalance: number) => {
+    try {
+      const { error } = await supabase
+        .from('wallets')
+        .update({ balance: newBalance })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error updating wallet balance:', error);
+    }
+  };
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -88,7 +127,7 @@ export const useAviatorGame = () => {
     return () => clearInterval(interval);
   }, [gameStarted, cashedOut, currentBet, toast, multiplier, highestMultiplier]);
 
-  const placeBet = () => {
+  const placeBet = async () => {
     const bet = parseFloat(betAmount);
     if (!bet || bet <= 0 || bet > balance) {
       toast({
@@ -99,8 +138,11 @@ export const useAviatorGame = () => {
       return;
     }
 
+    const newBalance = balance - bet;
     setCurrentBet(bet);
-    setBalance(balance - bet);
+    setBalance(newBalance);
+    await updateWalletBalance(newBalance);
+    
     setGameStarted(true);
     setIsFlying(true);
     setCashedOut(false);
@@ -112,11 +154,14 @@ export const useAviatorGame = () => {
     });
   };
 
-  const cashOut = () => {
+  const cashOut = async () => {
     if (!gameStarted || cashedOut || currentBet <= 0) return;
     
     const winnings = Math.floor(currentBet * multiplier);
-    setBalance(balance + winnings);
+    const newBalance = balance + winnings;
+    setBalance(newBalance);
+    await updateWalletBalance(newBalance);
+    
     setCashedOut(true);
     setGameStarted(false);
     setIsFlying(false);

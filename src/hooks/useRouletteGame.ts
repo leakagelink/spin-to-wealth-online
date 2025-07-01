@@ -1,8 +1,12 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { BetOption, GameHistoryEntry, RouletteGameState } from "@/types/roulette";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/components/AuthContext";
 
 export const useRouletteGame = () => {
+  const { user } = useAuth();
   const [betAmount, setBetAmount] = useState("");
   const [selectedBet, setSelectedBet] = useState<string>("");
   const [balance, setBalance] = useState(1000);
@@ -11,6 +15,43 @@ export const useRouletteGame = () => {
   const [gameHistory, setGameHistory] = useState<GameHistoryEntry[]>([]);
   const [ballPosition, setBallPosition] = useState(0);
   const { toast } = useToast();
+
+  // Fetch initial wallet balance
+  useEffect(() => {
+    if (user) {
+      fetchWalletBalance();
+    }
+  }, [user]);
+
+  const fetchWalletBalance = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('wallets')
+        .select('balance')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) throw error;
+      if (data) {
+        setBalance(Number(data.balance));
+      }
+    } catch (error) {
+      console.error('Error fetching wallet balance:', error);
+    }
+  };
+
+  const updateWalletBalance = async (newBalance: number) => {
+    try {
+      const { error } = await supabase
+        .from('wallets')
+        .update({ balance: newBalance })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error updating wallet balance:', error);
+    }
+  };
 
   const numbers = Array.from({ length: 37 }, (_, i) => i);
   const redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
@@ -42,7 +83,7 @@ export const useRouletteGame = () => {
     return false;
   };
 
-  const spinWheel = () => {
+  const spinWheel = async () => {
     const bet = parseFloat(betAmount);
     if (!bet || bet <= 0 || bet > balance) {
       toast({
@@ -62,7 +103,10 @@ export const useRouletteGame = () => {
       return;
     }
 
-    setBalance(balance - bet);
+    const newBalance = balance - bet;
+    setBalance(newBalance);
+    await updateWalletBalance(newBalance);
+    
     setSpinning(true);
     setResult(null);
     
@@ -76,7 +120,7 @@ export const useRouletteGame = () => {
     let ballSpinCount = 0;
     const maxBallSpins = 150; // Ball spinning duration
     
-    const ballSpinInterval = setInterval(() => {
+    const ballSpinInterval = setInterval(async () => {
       currentBallPosition = (currentBallPosition + ballSpeed) % 360;
       setBallPosition(currentBallPosition);
       ballSpeed *= ballDeceleration;
@@ -109,7 +153,10 @@ export const useRouletteGame = () => {
         
         if (isWin && selectedBetOption) {
           const winnings = bet * selectedBetOption.multiplier;
-          setBalance(balance + winnings);
+          const finalBalance = balance + winnings;
+          setBalance(finalBalance);
+          await updateWalletBalance(finalBalance);
+          
           toast({
             title: "🎉 Congratulations! You Won!",
             description: `Number ${resultNumber} (${getNumberColor(resultNumber)}) - Won ₹${winnings - bet}`,
