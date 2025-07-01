@@ -25,6 +25,8 @@ export const useAviatorGame = () => {
   }, [user]);
 
   const fetchWalletBalance = async () => {
+    if (!user) return;
+    
     try {
       const { data, error } = await supabase
         .from('wallets')
@@ -32,8 +34,17 @@ export const useAviatorGame = () => {
         .eq('user_id', user.id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching wallet balance:', error);
+        // If wallet doesn't exist, create it
+        if (error.code === 'PGRST116') {
+          await createWalletRecord();
+        }
+        return;
+      }
+      
       if (data) {
+        console.log('Fetched wallet balance:', data.balance);
         setBalance(Number(data.balance));
       }
     } catch (error) {
@@ -41,16 +52,56 @@ export const useAviatorGame = () => {
     }
   };
 
-  const updateWalletBalance = async (newBalance: number) => {
+  const createWalletRecord = async () => {
+    if (!user) return;
+    
     try {
+      const { data, error } = await supabase
+        .from('wallets')
+        .insert({
+          user_id: user.id,
+          balance: 1000.00,
+          total_deposited: 0.00,
+          total_withdrawn: 0.00,
+          bonus_balance: 0.00
+        })
+        .select('balance')
+        .single();
+
+      if (error) {
+        console.error('Error creating wallet record:', error);
+        return;
+      }
+
+      if (data) {
+        console.log('Created wallet with balance:', data.balance);
+        setBalance(Number(data.balance));
+      }
+    } catch (error) {
+      console.error('Error creating wallet record:', error);
+    }
+  };
+
+  const updateWalletBalance = async (newBalance: number) => {
+    if (!user) return;
+    
+    try {
+      console.log('Updating wallet balance to:', newBalance);
       const { error } = await supabase
         .from('wallets')
         .update({ balance: newBalance })
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating wallet balance:', error);
+        return false;
+      }
+      
+      console.log('Successfully updated wallet balance');
+      return true;
     } catch (error) {
       console.error('Error updating wallet balance:', error);
+      return false;
     }
   };
 
@@ -139,9 +190,20 @@ export const useAviatorGame = () => {
     }
 
     const newBalance = balance - bet;
+    console.log('Placing bet:', bet, 'New balance should be:', newBalance);
+    
+    const updateSuccess = await updateWalletBalance(newBalance);
+    if (!updateSuccess) {
+      toast({
+        title: "Error",
+        description: "Failed to update wallet balance",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setCurrentBet(bet);
     setBalance(newBalance);
-    await updateWalletBalance(newBalance);
     
     setGameStarted(true);
     setIsFlying(true);
@@ -159,9 +221,19 @@ export const useAviatorGame = () => {
     
     const winnings = Math.floor(currentBet * multiplier);
     const newBalance = balance + winnings;
-    setBalance(newBalance);
-    await updateWalletBalance(newBalance);
+    console.log('Cashing out:', winnings, 'New balance should be:', newBalance);
     
+    const updateSuccess = await updateWalletBalance(newBalance);
+    if (!updateSuccess) {
+      toast({
+        title: "Error",
+        description: "Failed to update wallet balance",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setBalance(newBalance);
     setCashedOut(true);
     setGameStarted(false);
     setIsFlying(false);

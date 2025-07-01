@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { BetOption, GameHistoryEntry, RouletteGameState } from "@/types/roulette";
@@ -24,6 +23,8 @@ export const useRouletteGame = () => {
   }, [user]);
 
   const fetchWalletBalance = async () => {
+    if (!user) return;
+    
     try {
       const { data, error } = await supabase
         .from('wallets')
@@ -31,8 +32,17 @@ export const useRouletteGame = () => {
         .eq('user_id', user.id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching wallet balance:', error);
+        // If wallet doesn't exist, create it
+        if (error.code === 'PGRST116') {
+          await createWalletRecord();
+        }
+        return;
+      }
+      
       if (data) {
+        console.log('Fetched wallet balance:', data.balance);
         setBalance(Number(data.balance));
       }
     } catch (error) {
@@ -40,16 +50,56 @@ export const useRouletteGame = () => {
     }
   };
 
-  const updateWalletBalance = async (newBalance: number) => {
+  const createWalletRecord = async () => {
+    if (!user) return;
+    
     try {
+      const { data, error } = await supabase
+        .from('wallets')
+        .insert({
+          user_id: user.id,
+          balance: 1000.00,
+          total_deposited: 0.00,
+          total_withdrawn: 0.00,
+          bonus_balance: 0.00
+        })
+        .select('balance')
+        .single();
+
+      if (error) {
+        console.error('Error creating wallet record:', error);
+        return;
+      }
+
+      if (data) {
+        console.log('Created wallet with balance:', data.balance);
+        setBalance(Number(data.balance));
+      }
+    } catch (error) {
+      console.error('Error creating wallet record:', error);
+    }
+  };
+
+  const updateWalletBalance = async (newBalance: number) => {
+    if (!user) return;
+    
+    try {
+      console.log('Updating wallet balance to:', newBalance);
       const { error } = await supabase
         .from('wallets')
         .update({ balance: newBalance })
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating wallet balance:', error);
+        return false;
+      }
+      
+      console.log('Successfully updated wallet balance');
+      return true;
     } catch (error) {
       console.error('Error updating wallet balance:', error);
+      return false;
     }
   };
 
@@ -104,9 +154,19 @@ export const useRouletteGame = () => {
     }
 
     const newBalance = balance - bet;
-    setBalance(newBalance);
-    await updateWalletBalance(newBalance);
+    console.log('Placing bet:', bet, 'New balance should be:', newBalance);
     
+    const updateSuccess = await updateWalletBalance(newBalance);
+    if (!updateSuccess) {
+      toast({
+        title: "Error",
+        description: "Failed to update wallet balance",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setBalance(newBalance);
     setSpinning(true);
     setResult(null);
     
@@ -154,8 +214,12 @@ export const useRouletteGame = () => {
         if (isWin && selectedBetOption) {
           const winnings = bet * selectedBetOption.multiplier;
           const finalBalance = balance + winnings;
-          setBalance(finalBalance);
-          await updateWalletBalance(finalBalance);
+          console.log('Won! Winnings:', winnings, 'Final balance should be:', finalBalance);
+          
+          const winUpdateSuccess = await updateWalletBalance(finalBalance);
+          if (winUpdateSuccess) {
+            setBalance(finalBalance);
+          }
           
           toast({
             title: "🎉 Congratulations! You Won!",
@@ -192,14 +256,34 @@ export const useRouletteGame = () => {
     ballPosition,
     
     // Constants
-    numbers,
-    redNumbers,
-    blackNumbers,
-    betOptions,
+    numbers: Array.from({ length: 37 }, (_, i) => i),
+    redNumbers: [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36],
+    blackNumbers: [2, 4, 6, 8, 10, 11, 13, 15, 17, 20, 22, 24, 26, 28, 29, 31, 33, 35],
+    betOptions: [
+      { name: "Red", value: "red", multiplier: 2, color: "bg-red-500 hover:bg-red-600", icon: "🔴" },
+      { name: "Black", value: "black", multiplier: 2, color: "bg-gray-900 hover:bg-gray-800", icon: "⚫" },
+      { name: "Even", value: "even", multiplier: 2, color: "bg-blue-500 hover:bg-blue-600", icon: "2️⃣" },
+      { name: "Odd", value: "odd", multiplier: 2, color: "bg-purple-500 hover:bg-purple-600", icon: "1️⃣" },
+      { name: "1-18", value: "low", multiplier: 2, color: "bg-green-500 hover:bg-green-600", icon: "📉" },
+      { name: "19-36", value: "high", multiplier: 2, color: "bg-orange-500 hover:bg-orange-600", icon: "📈" },
+    ],
     
     // Functions
-    getNumberColor,
-    checkWin,
+    getNumberColor: (num: number) => {
+      if (num === 0) return "green";
+      if ([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36].includes(num)) return "red";
+      if ([2, 4, 6, 8, 10, 11, 13, 15, 17, 20, 22, 24, 26, 28, 29, 31, 33, 35].includes(num)) return "black";
+      return "black";
+    },
+    checkWin: (resultNumber: number, bet: string) => {
+      if (bet === "red" && [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36].includes(resultNumber)) return true;
+      if (bet === "black" && [2, 4, 6, 8, 10, 11, 13, 15, 17, 20, 22, 24, 26, 28, 29, 31, 33, 35].includes(resultNumber)) return true;
+      if (bet === "even" && resultNumber !== 0 && resultNumber % 2 === 0) return true;
+      if (bet === "odd" && resultNumber % 2 === 1) return true;
+      if (bet === "low" && resultNumber >= 1 && resultNumber <= 18) return true;
+      if (bet === "high" && resultNumber >= 19 && resultNumber <= 36) return true;
+      return false;
+    },
     spinWheel,
   };
 };
