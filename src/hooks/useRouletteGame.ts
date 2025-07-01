@@ -1,8 +1,12 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { BetOption, GameHistoryEntry, RouletteGameState } from "@/types/roulette";
-import { supabase } from "@/integrations/supabase/client";
+import { BetOption, GameHistoryEntry } from "@/types/roulette";
 import { useAuth } from "@/components/AuthContext";
+import { WalletService } from "@/services/walletService";
+import { RouletteGameService } from "@/services/rouletteGameService";
+import { RouletteBettingService } from "@/services/rouletteBettingService";
+import { RouletteAnimationService } from "@/services/rouletteAnimationService";
 
 export const useRouletteGame = () => {
   const { user } = useAuth();
@@ -15,6 +19,15 @@ export const useRouletteGame = () => {
   const [ballPosition, setBallPosition] = useState(0);
   const { toast } = useToast();
 
+  const betOptions: BetOption[] = [
+    { name: "Red", value: "red", multiplier: 2, color: "bg-red-500 hover:bg-red-600", icon: "🔴" },
+    { name: "Black", value: "black", multiplier: 2, color: "bg-gray-900 hover:bg-gray-800", icon: "⚫" },
+    { name: "Even", value: "even", multiplier: 2, color: "bg-blue-500 hover:bg-blue-600", icon: "2️⃣" },
+    { name: "Odd", value: "odd", multiplier: 2, color: "bg-purple-500 hover:bg-purple-600", icon: "1️⃣" },
+    { name: "1-18", value: "low", multiplier: 2, color: "bg-green-500 hover:bg-green-600", icon: "📉" },
+    { name: "19-36", value: "high", multiplier: 2, color: "bg-orange-500 hover:bg-orange-600", icon: "📈" },
+  ];
+
   // Fetch initial wallet balance
   useEffect(() => {
     if (user) {
@@ -25,210 +38,77 @@ export const useRouletteGame = () => {
   const fetchWalletBalance = async () => {
     if (!user) return;
     
-    try {
-      const { data, error } = await supabase
-        .from('wallets')
-        .select('balance')
-        .eq('user_id', user.id)
-        .single();
-
-      if (error) {
-        console.error('Error fetching wallet balance:', error);
-        // If wallet doesn't exist, create it
-        if (error.code === 'PGRST116') {
-          await createWalletRecord();
-        }
-        return;
-      }
-      
-      if (data) {
-        console.log('Fetched wallet balance:', data.balance);
-        setBalance(Number(data.balance));
-      }
-    } catch (error) {
-      console.error('Error fetching wallet balance:', error);
+    const walletBalance = await WalletService.fetchWalletBalance(user.id);
+    if (walletBalance !== null) {
+      setBalance(walletBalance);
     }
-  };
-
-  const createWalletRecord = async () => {
-    if (!user) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('wallets')
-        .insert({
-          user_id: user.id,
-          balance: 1000.00,
-          total_deposited: 0.00,
-          total_withdrawn: 0.00,
-          bonus_balance: 0.00
-        })
-        .select('balance')
-        .single();
-
-      if (error) {
-        console.error('Error creating wallet record:', error);
-        return;
-      }
-
-      if (data) {
-        console.log('Created wallet with balance:', data.balance);
-        setBalance(Number(data.balance));
-      }
-    } catch (error) {
-      console.error('Error creating wallet record:', error);
-    }
-  };
-
-  const updateWalletBalance = async (newBalance: number) => {
-    if (!user) return;
-    
-    try {
-      console.log('Updating wallet balance to:', newBalance);
-      const { error } = await supabase
-        .from('wallets')
-        .update({ balance: newBalance })
-        .eq('user_id', user.id);
-
-      if (error) {
-        console.error('Error updating wallet balance:', error);
-        return false;
-      }
-      
-      console.log('Successfully updated wallet balance');
-      return true;
-    } catch (error) {
-      console.error('Error updating wallet balance:', error);
-      return false;
-    }
-  };
-
-  const numbers = Array.from({ length: 37 }, (_, i) => i);
-  const redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
-  const blackNumbers = [2, 4, 6, 8, 10, 11, 13, 15, 17, 20, 22, 24, 26, 28, 29, 31, 33, 35];
-
-  const betOptions: BetOption[] = [
-    { name: "Red", value: "red", multiplier: 2, color: "bg-red-500 hover:bg-red-600", icon: "🔴" },
-    { name: "Black", value: "black", multiplier: 2, color: "bg-gray-900 hover:bg-gray-800", icon: "⚫" },
-    { name: "Even", value: "even", multiplier: 2, color: "bg-blue-500 hover:bg-blue-600", icon: "2️⃣" },
-    { name: "Odd", value: "odd", multiplier: 2, color: "bg-purple-500 hover:bg-purple-600", icon: "1️⃣" },
-    { name: "1-18", value: "low", multiplier: 2, color: "bg-green-500 hover:bg-green-600", icon: "📉" },
-    { name: "19-36", value: "high", multiplier: 2, color: "bg-orange-500 hover:bg-orange-600", icon: "📈" },
-  ];
-
-  const getNumberColor = (num: number) => {
-    if (num === 0) return "green";
-    if (redNumbers.includes(num)) return "red";
-    if (blackNumbers.includes(num)) return "black";
-    return "black";
-  };
-
-  const checkWin = (resultNumber: number, bet: string) => {
-    if (bet === "red" && redNumbers.includes(resultNumber)) return true;
-    if (bet === "black" && blackNumbers.includes(resultNumber)) return true;
-    if (bet === "even" && resultNumber !== 0 && resultNumber % 2 === 0) return true;
-    if (bet === "odd" && resultNumber % 2 === 1) return true;
-    if (bet === "low" && resultNumber >= 1 && resultNumber <= 18) return true;
-    if (bet === "high" && resultNumber >= 19 && resultNumber <= 36) return true;
-    return false;
   };
 
   const spinWheel = async () => {
-    const bet = parseFloat(betAmount);
-    if (!bet || bet <= 0 || bet > balance) {
+    if (!user) {
       toast({
-        title: "Invalid bet",
-        description: "Please enter a valid bet amount",
+        title: "Authentication required",
+        description: "Please log in to place a bet",
         variant: "destructive",
       });
       return;
     }
 
-    if (!selectedBet) {
-      toast({
-        title: "No bet selected",
-        description: "Please select a bet type",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const newBalance = balance - bet;
-    console.log('Placing bet:', bet, 'New balance should be:', newBalance);
+    const result = await RouletteBettingService.placeBet(betAmount, balance, user.id, selectedBet);
     
-    const updateSuccess = await updateWalletBalance(newBalance);
-    if (!updateSuccess) {
+    if (!result.success) {
       toast({
-        title: "Error",
-        description: "Failed to update wallet balance",
+        title: result.error?.includes("bet type") ? "No bet selected" : "Invalid bet",
+        description: result.error,
         variant: "destructive",
       });
       return;
     }
     
-    setBalance(newBalance);
+    setBalance(result.newBalance!);
     setSpinning(true);
     setResult(null);
     
-    // Generate result first
-    const resultNumber = Math.floor(Math.random() * 37);
+    const resultNumber = RouletteGameService.generateRandomNumber();
+    const bet = result.bet!;
     
-    // Ball spinning animation - multiple rotations with realistic physics
-    let currentBallPosition = 0;
-    let ballSpeed = 20; // Initial ball speed
-    const ballDeceleration = 0.98; // Gradual slowdown for ball
-    let ballSpinCount = 0;
-    const maxBallSpins = 150; // Ball spinning duration
-    
-    const ballSpinInterval = setInterval(async () => {
-      currentBallPosition = (currentBallPosition + ballSpeed) % 360;
-      setBallPosition(currentBallPosition);
-      ballSpeed *= ballDeceleration;
-      ballSpinCount++;
-      
-      // Stop ball when we've done enough spins and speed is low
-      if (ballSpinCount >= maxBallSpins || ballSpeed < 1) {
-        clearInterval(ballSpinInterval);
-        
-        // Calculate final ball position based on result
-        const finalBallPosition = (resultNumber * (360 / 37)) + Math.random() * 8 - 4;
-        setBallPosition(finalBallPosition);
+    RouletteAnimationService.startBallAnimation(
+      resultNumber,
+      setBallPosition,
+      async () => {
         setResult(resultNumber);
         setSpinning(false);
         
         const selectedBetOption = betOptions.find(option => option.value === selectedBet);
-        const isWin = checkWin(resultNumber, selectedBet);
-        
-        const historyEntry: GameHistoryEntry = {
-          id: Date.now().toString(),
-          game: "Roulette",
-          bet: bet,
-          result: `${resultNumber} (${getNumberColor(resultNumber)})`,
-          payout: isWin && selectedBetOption ? (bet * selectedBetOption.multiplier) - bet : -bet,
-          timestamp: new Date(),
-          status: isWin ? 'win' : 'loss'
-        };
-        
-        setGameHistory(prev => [historyEntry, ...prev]);
+        const isWin = RouletteGameService.checkWin(resultNumber, selectedBet);
         
         if (isWin && selectedBetOption) {
-          const winnings = bet * selectedBetOption.multiplier;
-          const finalBalance = balance + winnings;
-          console.log('Won! Winnings:', winnings, 'Final balance should be:', finalBalance);
+          const winResult = await RouletteBettingService.processWin(
+            bet,
+            selectedBetOption.multiplier,
+            result.newBalance!,
+            user.id,
+            resultNumber
+          );
           
-          const winUpdateSuccess = await updateWalletBalance(finalBalance);
-          if (winUpdateSuccess) {
-            setBalance(finalBalance);
+          if (winResult.success) {
+            setBalance(winResult.newBalance!);
+            if (winResult.historyEntry) {
+              setGameHistory(prev => [winResult.historyEntry!, ...prev]);
+            }
+            
+            toast({
+              title: "🎉 Congratulations! You Won!",
+              description: `Number ${resultNumber} (${RouletteGameService.getNumberColor(resultNumber)}) - Won ₹${winResult.winnings! - bet}`,
+            });
           }
-          
-          toast({
-            title: "🎉 Congratulations! You Won!",
-            description: `Number ${resultNumber} (${getNumberColor(resultNumber)}) - Won ₹${winnings - bet}`,
-          });
         } else {
+          const historyEntry = RouletteBettingService.createLossHistoryEntry(bet, resultNumber);
+          setGameHistory(prev => [historyEntry, ...prev]);
+          
           toast({
             title: "Better luck next time!",
-            description: `Number ${resultNumber} (${getNumberColor(resultNumber)}) - Lost ₹${bet}`,
+            description: `Number ${resultNumber} (${RouletteGameService.getNumberColor(resultNumber)}) - Lost ₹${bet}`,
             variant: "destructive",
           });
         }
@@ -240,7 +120,7 @@ export const useRouletteGame = () => {
           setResult(null);
         }, 5000);
       }
-    }, 40); // Smoother animation
+    );
   };
 
   return {
@@ -256,34 +136,14 @@ export const useRouletteGame = () => {
     ballPosition,
     
     // Constants
-    numbers: Array.from({ length: 37 }, (_, i) => i),
-    redNumbers: [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36],
-    blackNumbers: [2, 4, 6, 8, 10, 11, 13, 15, 17, 20, 22, 24, 26, 28, 29, 31, 33, 35],
-    betOptions: [
-      { name: "Red", value: "red", multiplier: 2, color: "bg-red-500 hover:bg-red-600", icon: "🔴" },
-      { name: "Black", value: "black", multiplier: 2, color: "bg-gray-900 hover:bg-gray-800", icon: "⚫" },
-      { name: "Even", value: "even", multiplier: 2, color: "bg-blue-500 hover:bg-blue-600", icon: "2️⃣" },
-      { name: "Odd", value: "odd", multiplier: 2, color: "bg-purple-500 hover:bg-purple-600", icon: "1️⃣" },
-      { name: "1-18", value: "low", multiplier: 2, color: "bg-green-500 hover:bg-green-600", icon: "📉" },
-      { name: "19-36", value: "high", multiplier: 2, color: "bg-orange-500 hover:bg-orange-600", icon: "📈" },
-    ],
+    numbers: RouletteGameService.numbers,
+    redNumbers: RouletteGameService.redNumbers,
+    blackNumbers: RouletteGameService.blackNumbers,
+    betOptions,
     
     // Functions
-    getNumberColor: (num: number) => {
-      if (num === 0) return "green";
-      if ([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36].includes(num)) return "red";
-      if ([2, 4, 6, 8, 10, 11, 13, 15, 17, 20, 22, 24, 26, 28, 29, 31, 33, 35].includes(num)) return "black";
-      return "black";
-    },
-    checkWin: (resultNumber: number, bet: string) => {
-      if (bet === "red" && [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36].includes(resultNumber)) return true;
-      if (bet === "black" && [2, 4, 6, 8, 10, 11, 13, 15, 17, 20, 22, 24, 26, 28, 29, 31, 33, 35].includes(resultNumber)) return true;
-      if (bet === "even" && resultNumber !== 0 && resultNumber % 2 === 0) return true;
-      if (bet === "odd" && resultNumber % 2 === 1) return true;
-      if (bet === "low" && resultNumber >= 1 && resultNumber <= 18) return true;
-      if (bet === "high" && resultNumber >= 19 && resultNumber <= 36) return true;
-      return false;
-    },
+    getNumberColor: RouletteGameService.getNumberColor,
+    checkWin: RouletteGameService.checkWin,
     spinWheel,
   };
 };
