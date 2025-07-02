@@ -11,16 +11,16 @@ interface RouletteWheelProps {
 
 const RouletteWheel = ({ numbers, getNumberColor, spinning, result, ballPosition }: RouletteWheelProps) => {
   return (
-    <div className="mb-8">
-      {/* Professional Roulette Wheel */}
-      <div className="relative w-96 h-96 mx-auto">
+    <div className="mb-4 sm:mb-8">
+      {/* Mobile-optimized Roulette Wheel */}
+      <div className="relative w-72 h-72 sm:w-96 sm:h-96 mx-auto">
         {/* Outer decorative ring */}
-        <div className="absolute inset-0 rounded-full border-8 border-gradient-to-r from-yellow-400 via-yellow-600 to-yellow-400 bg-gradient-to-br from-yellow-500 via-yellow-600 to-yellow-700 shadow-2xl">
+        <div className="absolute inset-0 rounded-full border-4 sm:border-8 border-gradient-to-r from-yellow-400 via-yellow-600 to-yellow-400 bg-gradient-to-br from-yellow-500 via-yellow-600 to-yellow-700 shadow-2xl">
           {/* Middle ring with numbers */}
-          <div className="absolute inset-3 rounded-full bg-gradient-to-br from-green-800 via-green-900 to-black border-4 border-yellow-500 overflow-hidden">
-            {/* Inner spinning wheel - Now this spins with proper animation */}
+          <div className="absolute inset-2 sm:inset-3 rounded-full bg-gradient-to-br from-green-800 via-green-900 to-black border-2 sm:border-4 border-yellow-500 overflow-hidden">
+            {/* Inner spinning wheel */}
             <div 
-              className="absolute inset-6 rounded-full bg-gradient-to-br from-red-900 via-black to-red-900 overflow-hidden transition-transform duration-[4000ms] ease-out"
+              className="absolute inset-4 sm:inset-6 rounded-full bg-gradient-to-br from-red-900 via-black to-red-900 overflow-hidden transition-transform duration-[4000ms] ease-out"
               style={{
                 transform: spinning 
                   ? 'rotate(1800deg)' 
@@ -39,12 +39,12 @@ const RouletteWheel = ({ numbers, getNumberColor, spinning, result, ballPosition
                       position: 'absolute',
                       top: '50%',
                       left: '50%',
-                      transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(-120px)`,
+                      transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(-90px) sm:translateY(-120px)`,
                       transformOrigin: 'center',
                     }}
                   >
                     <div
-                      className={`w-8 h-8 flex items-center justify-center text-sm font-bold text-white rounded-full border border-yellow-300 shadow-md ${
+                      className={`w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center text-xs sm:text-sm font-bold text-white rounded-full border border-yellow-300 shadow-md ${
                         color === 'red' ? 'bg-gradient-to-br from-red-500 to-red-700' : 
                         color === 'black' ? 'bg-gradient-to-br from-gray-800 to-black' : 
                         'bg-gradient-to-br from-green-500 to-green-700'
@@ -60,14 +60,14 @@ const RouletteWheel = ({ numbers, getNumberColor, spinning, result, ballPosition
               })}
               
               {/* Center hub */}
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full border-2 border-yellow-300 shadow-xl flex items-center justify-center">
-                <div className="w-4 h-4 bg-gradient-to-br from-yellow-200 to-yellow-400 rounded-full"></div>
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 sm:w-12 sm:h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full border border-yellow-300 shadow-xl flex items-center justify-center">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-gradient-to-br from-yellow-200 to-yellow-400 rounded-full"></div>
               </div>
             </div>
             
             {/* Ball - spins independently on the outer track */}
             <div 
-              className={`absolute w-4 h-4 rounded-full shadow-xl transition-all duration-100 ${
+              className={`absolute w-3 h-3 sm:w-4 sm:h-4 rounded-full shadow-xl transition-all duration-100 ${
                 spinning ? 'animate-pulse' : ''
               }`}
               style={{
@@ -75,7 +75,7 @@ const RouletteWheel = ({ numbers, getNumberColor, spinning, result, ballPosition
                 position: 'absolute',
                 top: '50%',
                 left: '50%',
-                transform: `translate(-50%, -50%) rotate(${ballPosition}deg) translateY(-135px)`,
+                transform: `translate(-50%, -50%) rotate(${ballPosition}deg) translateY(-105px) sm:translateY(-135px)`,
                 boxShadow: spinning 
                   ? '0 0 15px rgba(255, 255, 255, 0.9), inset 0 1px 3px rgba(0, 0, 0, 0.4)' 
                   : '0 2px 6px rgba(0, 0, 0, 0.5), inset 0 1px 3px rgba(0, 0, 0, 0.4)',
@@ -87,26 +87,26 @@ const RouletteWheel = ({ numbers, getNumberColor, spinning, result, ballPosition
           </div>
           
           {/* Wheel pointer */}
-          <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-8 border-l-transparent border-r-transparent border-b-yellow-400 z-30 drop-shadow-lg"></div>
+          <div className="absolute top-1 sm:top-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-b-4 sm:border-l-4 sm:border-r-4 sm:border-b-8 border-l-transparent border-r-transparent border-b-yellow-400 z-30 drop-shadow-lg"></div>
         </div>
       </div>
       
-      {/* Enhanced Result Display */}
-      <div className="mt-12">
+      {/* Mobile-optimized Result Display */}
+      <div className="mt-6 sm:mt-12">
         {spinning ? (
-          <div className="text-4xl font-bold text-yellow-400 flex items-center justify-center gap-3">
-            <Sparkles className="w-10 h-10 animate-spin text-yellow-300" />
+          <div className="text-2xl sm:text-4xl font-bold text-yellow-400 flex items-center justify-center gap-2 sm:gap-3">
+            <Sparkles className="w-6 h-6 sm:w-10 sm:h-10 animate-spin text-yellow-300" />
             <span className="animate-pulse bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-300 bg-clip-text text-transparent">
-              Spinning the Wheel...
+              Spinning...
             </span>
-            <Sparkles className="w-10 h-10 animate-spin text-yellow-300" />
+            <Sparkles className="w-6 h-6 sm:w-10 sm:h-10 animate-spin text-yellow-300" />
           </div>
         ) : result !== null ? (
-          <div className="space-y-6 animate-fade-in">
-            <div className="text-8xl font-bold text-yellow-400 animate-bounce drop-shadow-2xl">
+          <div className="space-y-3 sm:space-y-6 animate-fade-in">
+            <div className="text-4xl sm:text-8xl font-bold text-yellow-400 animate-bounce drop-shadow-2xl">
               {result}
             </div>
-            <div className={`text-3xl font-bold px-8 py-4 rounded-2xl inline-block shadow-2xl border-2 transition-all duration-300 ${
+            <div className={`text-lg sm:text-3xl font-bold px-4 py-2 sm:px-8 sm:py-4 rounded-xl sm:rounded-2xl inline-block shadow-2xl border-2 transition-all duration-300 ${
               getNumberColor(result) === 'red' 
                 ? 'bg-gradient-to-br from-red-500/40 to-red-600/40 text-red-200 border-red-400 shadow-red-500/50' : 
               getNumberColor(result) === 'black' 
@@ -117,8 +117,8 @@ const RouletteWheel = ({ numbers, getNumberColor, spinning, result, ballPosition
             </div>
           </div>
         ) : (
-          <div className="text-gray-400 text-2xl font-medium">
-            🎰 Place your bet and spin the wheel!
+          <div className="text-gray-400 text-lg sm:text-2xl font-medium text-center px-4">
+            🎰 Place your bet and spin!
           </div>
         )}
       </div>
