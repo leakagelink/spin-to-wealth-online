@@ -25,8 +25,11 @@ export class RouletteBettingService {
       };
     }
 
+    // Ensure wallet exists first
+    await WalletService.ensureWalletExists(userId);
+
     const newBalance = balance - bet;
-    console.log('Placing bet:', bet, 'New balance should be:', newBalance);
+    console.log('Placing roulette bet:', bet, 'New balance should be:', newBalance);
     
     const updateSuccess = await WalletService.updateWalletBalance(userId, newBalance);
     if (!updateSuccess) {
@@ -52,13 +55,13 @@ export class RouletteBettingService {
   ): Promise<{ success: boolean; newBalance?: number; winnings?: number; historyEntry?: GameHistoryEntry; error?: string }> {
     const winnings = RouletteGameService.calculateWinnings(bet, multiplier);
     const finalBalance = balance + winnings;
-    console.log('Won! Winnings:', winnings, 'Final balance should be:', finalBalance);
+    console.log('Roulette win! Bet:', bet, 'Winnings:', winnings, 'Final balance should be:', finalBalance);
     
     const updateSuccess = await WalletService.updateWalletBalance(userId, finalBalance);
     if (!updateSuccess) {
       return { 
         success: false, 
-        error: "Failed to update wallet balance" 
+        error: "Failed to update wallet balance after win" 
       };
     }
     

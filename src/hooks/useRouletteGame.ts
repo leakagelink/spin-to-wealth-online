@@ -38,9 +38,13 @@ export const useRouletteGame = () => {
   const fetchWalletBalance = async () => {
     if (!user) return;
     
+    console.log('Fetching wallet balance for user:', user.id);
     const walletBalance = await WalletService.fetchWalletBalance(user.id);
     if (walletBalance !== null) {
+      console.log('Setting balance to:', walletBalance);
       setBalance(walletBalance);
+    } else {
+      console.log('Failed to fetch wallet balance, keeping default');
     }
   };
 
@@ -54,6 +58,8 @@ export const useRouletteGame = () => {
       return;
     }
 
+    console.log('Starting roulette spin with bet:', betAmount, 'selected bet:', selectedBet);
+    
     const result = await RouletteBettingService.placeBet(betAmount, balance, user.id, selectedBet);
     
     if (!result.success) {
@@ -65,12 +71,15 @@ export const useRouletteGame = () => {
       return;
     }
     
+    console.log('Bet placed successfully, updating balance to:', result.newBalance);
     setBalance(result.newBalance!);
     setSpinning(true);
     setResult(null);
     
     const resultNumber = RouletteGameService.generateRandomNumber();
     const bet = result.bet!;
+    
+    console.log('Generated result number:', resultNumber);
     
     RouletteAnimationService.startBallAnimation(
       resultNumber,
@@ -82,7 +91,10 @@ export const useRouletteGame = () => {
         const selectedBetOption = betOptions.find(option => option.value === selectedBet);
         const isWin = RouletteGameService.checkWin(resultNumber, selectedBet);
         
+        console.log('Roulette result - Number:', resultNumber, 'Is win:', isWin);
+        
         if (isWin && selectedBetOption) {
+          console.log('Processing roulette win...');
           const winResult = await RouletteBettingService.processWin(
             bet,
             selectedBetOption.multiplier,
@@ -92,6 +104,7 @@ export const useRouletteGame = () => {
           );
           
           if (winResult.success) {
+            console.log('Win processed successfully, new balance:', winResult.newBalance);
             setBalance(winResult.newBalance!);
             if (winResult.historyEntry) {
               setGameHistory(prev => [winResult.historyEntry!, ...prev]);
@@ -101,8 +114,16 @@ export const useRouletteGame = () => {
               title: "🎉 Congratulations! You Won!",
               description: `Number ${resultNumber} (${RouletteGameService.getNumberColor(resultNumber)}) - Won ₹${winResult.winnings! - bet}`,
             });
+          } else {
+            console.error('Failed to process win:', winResult.error);
+            toast({
+              title: "Error",
+              description: winResult.error || "Failed to process winnings",
+              variant: "destructive",
+            });
           }
         } else {
+          console.log('Roulette loss, creating history entry');
           const historyEntry = RouletteBettingService.createLossHistoryEntry(bet, resultNumber);
           setGameHistory(prev => [historyEntry, ...prev]);
           

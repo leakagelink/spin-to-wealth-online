@@ -32,6 +32,7 @@ export class WalletService {
 
   static async createWalletRecord(userId: string): Promise<number | null> {
     try {
+      console.log('Creating wallet for user:', userId);
       const { data, error } = await supabase
         .from('wallets')
         .insert({
@@ -62,7 +63,15 @@ export class WalletService {
 
   static async updateWalletBalance(userId: string, newBalance: number): Promise<boolean> {
     try {
-      console.log('Updating wallet balance to:', newBalance);
+      console.log('Updating wallet balance for user:', userId, 'to:', newBalance);
+      
+      // First ensure wallet exists
+      const currentBalance = await this.fetchWalletBalance(userId);
+      if (currentBalance === null) {
+        console.log('Wallet not found, creating new wallet');
+        await this.createWalletRecord(userId);
+      }
+
       const { error } = await supabase
         .from('wallets')
         .update({ balance: newBalance })
@@ -73,10 +82,20 @@ export class WalletService {
         return false;
       }
       
-      console.log('Successfully updated wallet balance');
+      console.log('Successfully updated wallet balance to:', newBalance);
       return true;
     } catch (error) {
       console.error('Error updating wallet balance:', error);
+      return false;
+    }
+  }
+
+  static async ensureWalletExists(userId: string): Promise<boolean> {
+    try {
+      const balance = await this.fetchWalletBalance(userId);
+      return balance !== null;
+    } catch (error) {
+      console.error('Error ensuring wallet exists:', error);
       return false;
     }
   }

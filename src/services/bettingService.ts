@@ -17,8 +17,11 @@ export class BettingService {
       };
     }
 
+    // Ensure wallet exists first
+    await WalletService.ensureWalletExists(userId);
+
     const newBalance = balance - bet;
-    console.log('Placing bet:', bet, 'New balance should be:', newBalance);
+    console.log('Placing aviator bet:', bet, 'New balance should be:', newBalance);
     
     const updateSuccess = await WalletService.updateWalletBalance(userId, newBalance);
     if (!updateSuccess) {
@@ -50,7 +53,7 @@ export class BettingService {
     
     const winnings = Math.floor(currentBet * multiplier);
     const newBalance = balance + winnings;
-    console.log('Cashing out:', winnings, 'New balance should be:', newBalance);
+    console.log('Aviator cash out - Bet:', currentBet, 'Multiplier:', multiplier, 'Winnings:', winnings, 'New balance should be:', newBalance);
     
     const updateSuccess = await WalletService.updateWalletBalance(userId, newBalance);
     if (!updateSuccess) {
