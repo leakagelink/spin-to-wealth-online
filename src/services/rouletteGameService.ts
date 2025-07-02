@@ -11,15 +11,15 @@ export class RouletteGameService {
   }
 
   static generateRandomNumber(): number {
-    return this.numbers[Math.floor(Math.random() * this.numbers.length)];
+    return RouletteGameService.numbers[Math.floor(Math.random() * RouletteGameService.numbers.length)];
   }
 
   static checkWin(resultNumber: number, selectedBet: string): boolean {
     switch (selectedBet) {
       case 'red':
-        return this.redNumbers.includes(resultNumber);
+        return RouletteGameService.redNumbers.includes(resultNumber);
       case 'black':
-        return this.blackNumbers.includes(resultNumber);
+        return RouletteGameService.blackNumbers.includes(resultNumber);
       case 'even':
         return resultNumber !== 0 && resultNumber % 2 === 0;
       case 'odd':
