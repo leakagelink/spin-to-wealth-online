@@ -26,8 +26,8 @@ const GameDisplay = ({ multiplier, isFlying, gameStarted, cashedOut, currentBet 
   
   return (
     <Card className="bg-gray-800/30 border-gray-700 backdrop-blur-xl shadow-2xl">
-      <CardContent className="p-0">
-        <div className="relative h-96 bg-gradient-to-b from-sky-900/40 to-blue-800/40 rounded-lg overflow-hidden">
+      <CardContent className="p-2 sm:p-4">
+        <div className="relative h-64 sm:h-96 bg-gradient-to-b from-sky-900/40 to-blue-800/40 rounded-lg overflow-hidden">
           {/* Grid background for more realistic look */}
           <div className="absolute inset-0 opacity-20">
             <svg width="100%" height="100%">
@@ -60,7 +60,7 @@ const GameDisplay = ({ multiplier, isFlying, gameStarted, cashedOut, currentBet 
             {[...Array(3)].map((_, i) => (
               <div
                 key={i}
-                className="absolute w-16 h-8 bg-white/10 rounded-full blur-sm animate-pulse"
+                className="absolute w-12 h-6 sm:w-16 sm:h-8 bg-white/10 rounded-full blur-sm animate-pulse"
                 style={{
                   left: `${20 + i * 30}%`,
                   top: `${30 + i * 20}%`,
@@ -76,7 +76,7 @@ const GameDisplay = ({ multiplier, isFlying, gameStarted, cashedOut, currentBet 
           {gameStarted && (
             <svg className="absolute inset-0 w-full h-full">
               <path
-                d={`M 40 320 Q ${planePos.x * 4} ${planePos.y * 4} ${planePos.x * 4 + 50} ${planePos.y * 4 - 20}`}
+                d={`M 40 ${window.innerHeight < 640 ? '220' : '320'} Q ${planePos.x * (window.innerWidth < 640 ? 2.5 : 4)} ${planePos.y * (window.innerHeight < 640 ? 2.5 : 4)} ${planePos.x * (window.innerWidth < 640 ? 2.8 : 4) + 50} ${planePos.y * (window.innerHeight < 640 ? 2.5 : 4) - 20}`}
                 stroke="rgba(34, 197, 94, 0.6)"
                 strokeWidth="3"
                 fill="none"
@@ -96,7 +96,7 @@ const GameDisplay = ({ multiplier, isFlying, gameStarted, cashedOut, currentBet 
             }}
           >
             <div className={`relative ${isFlying ? 'animate-bounce' : ''}`}>
-              <Plane className={`w-12 h-12 text-yellow-400 transition-all duration-200 drop-shadow-2xl ${
+              <Plane className={`w-8 h-8 sm:w-12 sm:h-12 text-yellow-400 transition-all duration-200 drop-shadow-2xl ${
                 gameStarted ? 'scale-110' : 'scale-100'
               }`} />
               
@@ -104,34 +104,34 @@ const GameDisplay = ({ multiplier, isFlying, gameStarted, cashedOut, currentBet 
               {isFlying && (
                 <>
                   {/* Engine glow */}
-                  <div className="absolute -bottom-1 -left-1 w-14 h-14 bg-gradient-to-r from-orange-400/40 to-red-400/40 rounded-full blur-xl animate-pulse"></div>
+                  <div className="absolute -bottom-1 -left-1 w-10 h-10 sm:w-14 sm:h-14 bg-gradient-to-r from-orange-400/40 to-red-400/40 rounded-full blur-xl animate-pulse"></div>
                   
                   {/* Contrail effect */}
                   <div className="absolute top-1/2 left-0 transform -translate-y-1/2">
-                    {[...Array(8)].map((_, i) => (
+                    {[...Array(6)].map((_, i) => (
                       <div
                         key={i}
                         className="absolute w-1 h-1 bg-white/60 rounded-full animate-pulse"
                         style={{
-                          left: `${-5 - i * 4}px`,
-                          top: `${Math.sin(i * 0.5) * 3}px`,
+                          left: `${-5 - i * 3}px`,
+                          top: `${Math.sin(i * 0.5) * 2}px`,
                           animationDelay: `${i * 0.1}s`,
-                          opacity: 1 - (i * 0.12)
+                          opacity: 1 - (i * 0.15)
                         }}
                       />
                     ))}
                   </div>
                   
                   {/* Wing tip effects */}
-                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-blue-400/30 to-cyan-400/30 rounded-full blur-md animate-ping"></div>
+                  <div className="absolute -top-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 bg-gradient-to-r from-blue-400/30 to-cyan-400/30 rounded-full blur-md animate-ping"></div>
                 </>
               )}
             </div>
           </div>
           
           {/* Enhanced multiplier display */}
-          <div className="absolute top-8 left-8">
-            <div className={`text-6xl font-bold transition-all duration-300 ${
+          <div className="absolute top-2 sm:top-8 left-2 sm:left-8">
+            <div className={`text-3xl sm:text-6xl font-bold transition-all duration-300 ${
               gameStarted 
                 ? 'text-transparent bg-gradient-to-r from-green-400 via-yellow-400 to-red-400 bg-clip-text animate-pulse' 
                 : 'text-white/80'
@@ -139,10 +139,10 @@ const GameDisplay = ({ multiplier, isFlying, gameStarted, cashedOut, currentBet 
               {multiplier.toFixed(2)}x
             </div>
             {gameStarted && !cashedOut && (
-              <div className="mt-2">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-green-400 animate-bounce" />
-                  <span className="text-green-400 font-semibold text-lg animate-pulse">
+              <div className="mt-1 sm:mt-2">
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-400 animate-bounce" />
+                  <span className="text-green-400 font-semibold text-sm sm:text-lg animate-pulse">
                     Flying High!
                   </span>
                 </div>
@@ -152,43 +152,43 @@ const GameDisplay = ({ multiplier, isFlying, gameStarted, cashedOut, currentBet 
           
           {/* Speed indicator */}
           {gameStarted && (
-            <div className="absolute top-8 right-8 bg-black/50 px-4 py-2 rounded-lg backdrop-blur-sm border border-gray-600/30">
-              <div className="text-sm text-gray-300">Speed</div>
-              <div className="text-xl font-bold text-cyan-400">
+            <div className="absolute top-2 sm:top-8 right-2 sm:right-8 bg-black/50 px-2 py-1 sm:px-4 sm:py-2 rounded-lg backdrop-blur-sm border border-gray-600/30">
+              <div className="text-xs sm:text-sm text-gray-300">Speed</div>
+              <div className="text-sm sm:text-xl font-bold text-cyan-400">
                 {(multiplier * 100).toFixed(0)} km/h
               </div>
             </div>
           )}
           
           {/* Enhanced bottom status */}
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+          <div className="absolute bottom-2 sm:bottom-4 left-1/2 transform -translate-x-1/2 px-2">
             {gameStarted ? (
               <div className="text-center">
-                <div className="text-green-400 font-semibold text-lg mb-2 animate-pulse bg-black/40 px-6 py-3 rounded-xl backdrop-blur-sm border border-green-400/30">
+                <div className="text-green-400 font-semibold text-sm sm:text-lg mb-1 sm:mb-2 animate-pulse bg-black/40 px-3 py-2 sm:px-6 sm:py-3 rounded-xl backdrop-blur-sm border border-green-400/30">
                   ✈️ Plane is ascending! Cash out before it crashes!
                 </div>
                 {currentBet > 0 && (
-                  <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 px-6 py-3 rounded-xl backdrop-blur-sm border border-yellow-400/30">
-                    <span className="text-yellow-400 font-bold text-lg">
+                  <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 px-3 py-2 sm:px-6 sm:py-3 rounded-xl backdrop-blur-sm border border-yellow-400/30">
+                    <span className="text-yellow-400 font-bold text-sm sm:text-lg">
                       Potential Win: ₹{Math.floor(currentBet * multiplier).toLocaleString()}
                     </span>
                   </div>
                 )}
               </div>
             ) : (
-              <div className="text-gray-400 text-center bg-black/40 px-8 py-4 rounded-xl backdrop-blur-sm border border-gray-600/30">
-                <div className="text-lg font-semibold mb-1">Ready for takeoff!</div>
-                <div className="text-sm">Place your bet and watch the plane soar to new heights</div>
+              <div className="text-gray-400 text-center bg-black/40 px-4 py-2 sm:px-8 sm:py-4 rounded-xl backdrop-blur-sm border border-gray-600/30">
+                <div className="text-sm sm:text-lg font-semibold mb-1">Ready for takeoff!</div>
+                <div className="text-xs sm:text-sm">Place your bet and watch the plane soar</div>
               </div>
             )}
           </div>
           
           {/* Altitude indicator */}
           {gameStarted && (
-            <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-              <div className="bg-black/50 px-3 py-2 rounded-lg backdrop-blur-sm border border-gray-600/30 rotate-90">
+            <div className="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2">
+              <div className="bg-black/50 px-2 py-1 sm:px-3 sm:py-2 rounded-lg backdrop-blur-sm border border-gray-600/30 rotate-90">
                 <div className="text-xs text-gray-300 -rotate-90">ALT</div>
-                <div className="text-sm font-bold text-blue-400 -rotate-90">
+                <div className="text-xs sm:text-sm font-bold text-blue-400 -rotate-90">
                   {Math.floor(multiplier * 1000)}ft
                 </div>
               </div>
