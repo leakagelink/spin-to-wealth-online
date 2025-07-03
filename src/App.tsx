@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/components/AuthContext";
 import Index from "./pages/Index";
 import Profile from "./pages/Profile";
+import Admin from "./pages/Admin";
 import GameAviator from "./pages/GameAviator";
 import GameMines from "./pages/GameMines";
 import GameColorPrediction from "./pages/GameColorPrediction";
@@ -30,6 +31,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/admin" element={<Admin />} />
             <Route path="/game/aviator" element={<GameAviator />} />
             <Route path="/game/car-racing" element={<GameCarRacing />} />
             <Route path="/game/jetx" element={<GameJetX />} />
