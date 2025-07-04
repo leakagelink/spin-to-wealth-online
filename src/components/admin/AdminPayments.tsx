@@ -48,7 +48,7 @@ const AdminPayments = () => {
       if (error && error.code !== "PGRST116") throw error;
 
       if (data) {
-        setPaymentSettings(data.setting_value as PaymentSettings);
+        setPaymentSettings(data.setting_value as unknown as PaymentSettings);
       }
     } catch (error) {
       console.error("Error fetching payment settings:", error);
@@ -65,7 +65,7 @@ const AdminPayments = () => {
         .from('system_settings')
         .upsert({
           setting_key: "payment_methods",
-          setting_value: paymentSettings,
+          setting_value: paymentSettings as any,
           description: "Payment configuration"
         });
 
@@ -76,7 +76,7 @@ const AdminPayments = () => {
         await supabase.rpc('log_admin_action', {
           _action: "Payment settings updated",
           _target_type: "system",
-          _details: { updated_fields: Object.keys(paymentSettings) }
+          _details: { updated_fields: Object.keys(paymentSettings) } as any
         });
       } catch (logError) {
         console.warn("Failed to log admin action:", logError);

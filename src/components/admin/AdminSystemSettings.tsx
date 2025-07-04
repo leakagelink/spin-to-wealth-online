@@ -54,9 +54,9 @@ const AdminSystemSettings = () => {
 
       data?.forEach((setting: any) => {
         if (setting.setting_key === "site_settings") {
-          setSiteSettings(setting.setting_value as SiteSettings);
+          setSiteSettings(setting.setting_value as unknown as SiteSettings);
         } else if (setting.setting_key === "referral_settings") {
-          setReferralSettings(setting.setting_value as ReferralSettings);
+          setReferralSettings(setting.setting_value as unknown as ReferralSettings);
         }
       });
     } catch (error) {
@@ -73,12 +73,12 @@ const AdminSystemSettings = () => {
       const updates = [
         {
           setting_key: "site_settings",
-          setting_value: siteSettings,
+          setting_value: siteSettings as any,
           description: "General site settings"
         },
         {
           setting_key: "referral_settings",
-          setting_value: referralSettings,
+          setting_value: referralSettings as any,
           description: "Referral program settings"
         }
       ];
@@ -94,7 +94,7 @@ const AdminSystemSettings = () => {
         await supabase.rpc('log_admin_action', {
           _action: "System settings updated",
           _target_type: "system",
-          _details: { site_settings: siteSettings, referral_settings: referralSettings }
+          _details: { site_settings: siteSettings, referral_settings: referralSettings } as any
         });
       } catch (logError) {
         console.warn("Failed to log admin action:", logError);
