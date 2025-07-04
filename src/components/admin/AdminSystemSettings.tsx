@@ -46,13 +46,13 @@ const AdminSystemSettings = () => {
   const fetchSettings = async () => {
     try {
       const { data, error } = await supabase
-        .from("system_settings")
-        .select("setting_key, setting_value")
-        .in("setting_key", ["site_settings", "referral_settings"]);
+        .from('system_settings' as any)
+        .select('setting_key, setting_value')
+        .in('setting_key', ['site_settings', 'referral_settings']);
 
       if (error) throw error;
 
-      data.forEach(setting => {
+      data?.forEach((setting: any) => {
         if (setting.setting_key === "site_settings") {
           setSiteSettings(setting.setting_value as SiteSettings);
         } else if (setting.setting_key === "referral_settings") {
@@ -84,17 +84,21 @@ const AdminSystemSettings = () => {
       ];
 
       const { error } = await supabase
-        .from("system_settings")
+        .from('system_settings' as any)
         .upsert(updates);
 
       if (error) throw error;
 
       // Log admin action
-      await supabase.rpc("log_admin_action", {
-        _action: "System settings updated",
-        _target_type: "system",
-        _details: { site_settings: siteSettings, referral_settings: referralSettings }
-      });
+      try {
+        await supabase.rpc('log_admin_action' as any, {
+          _action: "System settings updated",
+          _target_type: "system",
+          _details: { site_settings: siteSettings, referral_settings: referralSettings }
+        });
+      } catch (logError) {
+        console.warn("Failed to log admin action:", logError);
+      }
 
       toast.success("Settings saved successfully");
     } catch (error) {

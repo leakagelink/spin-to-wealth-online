@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { CreditCard, Save, Upload } from "lucide-react";
 import { toast } from "sonner";
 
@@ -41,9 +40,9 @@ const AdminPayments = () => {
   const fetchPaymentSettings = async () => {
     try {
       const { data, error } = await supabase
-        .from("system_settings")
-        .select("setting_value")
-        .eq("setting_key", "payment_methods")
+        .from('system_settings' as any)
+        .select('setting_value')
+        .eq('setting_key', 'payment_methods')
         .single();
 
       if (error && error.code !== "PGRST116") throw error;
@@ -63,7 +62,7 @@ const AdminPayments = () => {
     setSaving(true);
     try {
       const { error } = await supabase
-        .from("system_settings")
+        .from('system_settings' as any)
         .upsert({
           setting_key: "payment_methods",
           setting_value: paymentSettings,
@@ -73,11 +72,15 @@ const AdminPayments = () => {
       if (error) throw error;
 
       // Log admin action
-      await supabase.rpc("log_admin_action", {
-        _action: "Payment settings updated",
-        _target_type: "system",
-        _details: { updated_fields: Object.keys(paymentSettings) }
-      });
+      try {
+        await supabase.rpc('log_admin_action' as any, {
+          _action: "Payment settings updated",
+          _target_type: "system",
+          _details: { updated_fields: Object.keys(paymentSettings) }
+        });
+      } catch (logError) {
+        console.warn("Failed to log admin action:", logError);
+      }
 
       toast.success("Payment settings saved successfully");
     } catch (error) {

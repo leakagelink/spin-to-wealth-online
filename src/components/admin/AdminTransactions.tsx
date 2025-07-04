@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Search, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
 interface Transaction {
@@ -70,12 +70,16 @@ const AdminTransactions = () => {
       if (error) throw error;
 
       // Log admin action
-      await supabase.rpc("log_admin_action", {
-        _action: `Transaction ${newStatus}`,
-        _target_type: "transaction",
-        _target_id: transactionId,
-        _details: { new_status: newStatus }
-      });
+      try {
+        await supabase.rpc('log_admin_action' as any, {
+          _action: `Transaction ${newStatus}`,
+          _target_type: "transaction",
+          _target_id: transactionId,
+          _details: { new_status: newStatus }
+        });
+      } catch (logError) {
+        console.warn("Failed to log admin action:", logError);
+      }
 
       toast.success(`Transaction ${newStatus} successfully`);
       fetchTransactions();
