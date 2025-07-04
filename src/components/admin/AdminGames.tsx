@@ -32,9 +32,8 @@ const AdminGames = () => {
 
   const fetchGames = async () => {
     try {
-      // Use raw SQL query since the types aren't updated yet
       const { data, error } = await supabase
-        .from('game_settings' as any)
+        .from('game_settings')
         .select('*')
         .order('game_name');
 
@@ -51,15 +50,15 @@ const AdminGames = () => {
   const toggleGameStatus = async (gameId: string, currentStatus: boolean) => {
     try {
       const { error } = await supabase
-        .from('game_settings' as any)
+        .from('game_settings')
         .update({ is_enabled: !currentStatus })
         .eq('id', gameId);
 
       if (error) throw error;
 
-      // Log admin action using raw SQL
+      // Log admin action
       try {
-        await supabase.rpc('log_admin_action' as any, {
+        await supabase.rpc('log_admin_action', {
           _action: `Game ${!currentStatus ? 'enabled' : 'disabled'}`,
           _target_type: "game",
           _target_id: gameId,
@@ -88,7 +87,7 @@ const AdminGames = () => {
   const saveGameSettings = async (gameId: string) => {
     try {
       const { error } = await supabase
-        .from('game_settings' as any)
+        .from('game_settings')
         .update({
           min_bet_amount: editValues.min_bet,
           max_bet_amount: editValues.max_bet
@@ -99,7 +98,7 @@ const AdminGames = () => {
 
       // Log admin action
       try {
-        await supabase.rpc('log_admin_action' as any, {
+        await supabase.rpc('log_admin_action', {
           _action: "Game settings updated",
           _target_type: "game",
           _target_id: gameId,

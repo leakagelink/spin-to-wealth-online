@@ -46,7 +46,7 @@ const AdminSystemSettings = () => {
   const fetchSettings = async () => {
     try {
       const { data, error } = await supabase
-        .from('system_settings' as any)
+        .from('system_settings')
         .select('setting_key, setting_value')
         .in('setting_key', ['site_settings', 'referral_settings']);
 
@@ -84,14 +84,14 @@ const AdminSystemSettings = () => {
       ];
 
       const { error } = await supabase
-        .from('system_settings' as any)
+        .from('system_settings')
         .upsert(updates);
 
       if (error) throw error;
 
       // Log admin action
       try {
-        await supabase.rpc('log_admin_action' as any, {
+        await supabase.rpc('log_admin_action', {
           _action: "System settings updated",
           _target_type: "system",
           _details: { site_settings: siteSettings, referral_settings: referralSettings }

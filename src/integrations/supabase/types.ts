@@ -9,6 +9,39 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      game_settings: {
+        Row: {
+          created_at: string
+          game_config: Json | null
+          game_name: string
+          id: string
+          is_enabled: boolean
+          max_bet_amount: number
+          min_bet_amount: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          game_config?: Json | null
+          game_name: string
+          id?: string
+          is_enabled?: boolean
+          max_bet_amount?: number
+          min_bet_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          game_config?: Json | null
+          game_name?: string
+          id?: string
+          is_enabled?: boolean
+          max_bet_amount?: number
+          min_bet_amount?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -77,6 +110,33 @@ export type Database = {
         }
         Relationships: []
       }
+      system_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          setting_key: string
+          setting_value: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          setting_key: string
+          setting_value: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           amount: number
@@ -112,6 +172,27 @@ export type Database = {
           transaction_id?: string | null
           type?: string
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string
           user_id?: string
         }
         Relationships: []
@@ -154,6 +235,15 @@ export type Database = {
       generate_referral_code: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      log_admin_action: {
+        Args: {
+          _action: string
+          _target_type?: string
+          _target_id?: string
+          _details?: Json
+        }
+        Returns: undefined
       }
     }
     Enums: {

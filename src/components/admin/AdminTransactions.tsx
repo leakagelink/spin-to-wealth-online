@@ -20,7 +20,7 @@ interface Transaction {
   created_at: string;
   transaction_id: string;
   notes: string;
-  profiles: {
+  user_profile?: {
     full_name: string;
     phone: string;
   };
@@ -39,19 +39,31 @@ const AdminTransactions = () => {
 
   const fetchTransactions = async () => {
     try {
-      const { data, error } = await supabase
+      // First get transactions
+      const { data: transactionsData, error: transactionsError } = await supabase
         .from("transactions")
-        .select(`
-          *,
-          profiles (
-            full_name,
-            phone
-          )
-        `)
+        .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      setTransactions(data || []);
+      if (transactionsError) throw transactionsError;
+
+      // Then get profiles for each transaction
+      const transactionsWithProfiles = await Promise.all(
+        (transactionsData || []).map(async (transaction) => {
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("full_name, phone")
+            .eq("id", transaction.user_id)
+            .single();
+
+          return {
+            ...transaction,
+            user_profile: profileData || { full_name: "N/A", phone: "N/A" }
+          };
+        })
+      );
+
+      setTransactions(transactionsWithProfiles);
     } catch (error) {
       console.error("Error fetching transactions:", error);
       toast.error("Failed to fetch transactions");
@@ -71,7 +83,7 @@ const AdminTransactions = () => {
 
       // Log admin action
       try {
-        await supabase.rpc('log_admin_action' as any, {
+        await supabase.rpc('log_admin_action', {
           _action: `Transaction ${newStatus}`,
           _target_type: "transaction",
           _target_id: transactionId,
@@ -110,8 +122,8 @@ const AdminTransactions = () => {
 
   const filteredTransactions = transactions.filter(transaction => {
     const matchesSearch = 
-      transaction.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.profiles?.phone?.includes(searchTerm) ||
+      transaction.user_profile?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      transaction.user_profile?.phone?.includes(searchTerm) ||
       transaction.transaction_id?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === "all" || transaction.status === statusFilter;
@@ -187,8 +199,8 @@ const AdminTransactions = () => {
                   <TableRow key={transaction.id} className="border-gray-700">
                     <TableCell className="text-white">
                       <div>
-                        <div>{transaction.profiles?.full_name || "N/A"}</div>
-                        <div className="text-sm text-gray-400">{transaction.profiles?.phone || "N/A"}</div>
+                        <div>{transaction.user_profile?.full_name || "N/A"}</div>
+                        <div className="text-sm text-gray-400">{transaction.user_profile?.phone || "N/A"}</div>
                       </div>
                     </TableCell>
                     <TableCell className="text-green-400 font-semibold">

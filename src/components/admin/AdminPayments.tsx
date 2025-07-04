@@ -40,7 +40,7 @@ const AdminPayments = () => {
   const fetchPaymentSettings = async () => {
     try {
       const { data, error } = await supabase
-        .from('system_settings' as any)
+        .from('system_settings')
         .select('setting_value')
         .eq('setting_key', 'payment_methods')
         .single();
@@ -62,7 +62,7 @@ const AdminPayments = () => {
     setSaving(true);
     try {
       const { error } = await supabase
-        .from('system_settings' as any)
+        .from('system_settings')
         .upsert({
           setting_key: "payment_methods",
           setting_value: paymentSettings,
@@ -73,7 +73,7 @@ const AdminPayments = () => {
 
       // Log admin action
       try {
-        await supabase.rpc('log_admin_action' as any, {
+        await supabase.rpc('log_admin_action', {
           _action: "Payment settings updated",
           _target_type: "system",
           _details: { updated_fields: Object.keys(paymentSettings) }

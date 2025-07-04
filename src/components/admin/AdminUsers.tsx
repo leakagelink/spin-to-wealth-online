@@ -31,36 +31,37 @@ const AdminUsers = () => {
 
   const fetchUsers = async () => {
     try {
-      const { data, error } = await supabase
+      // Get profiles first
+      const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
-        .select(`
-          id,
-          full_name,
-          phone,
-          created_at,
-          referral_code,
-          wallets (
-            balance,
-            total_deposited,
-            total_withdrawn
-          )
-        `)
+        .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (profilesError) throw profilesError;
 
-      const formattedUsers = data.map(user => ({
-        id: user.id,
-        full_name: user.full_name || "N/A",
-        phone: user.phone || "N/A",
-        created_at: user.created_at,
-        referral_code: user.referral_code || "N/A",
-        balance: user.wallets?.[0]?.balance || 0,
-        total_deposited: user.wallets?.[0]?.total_deposited || 0,
-        total_withdrawn: user.wallets?.[0]?.total_withdrawn || 0,
-      }));
+      // Get wallet data for each user
+      const usersWithWallets = await Promise.all(
+        (profilesData || []).map(async (profile) => {
+          const { data: walletData } = await supabase
+            .from("wallets")
+            .select("balance, total_deposited, total_withdrawn")
+            .eq("user_id", profile.id)
+            .single();
 
-      setUsers(formattedUsers);
+          return {
+            id: profile.id,
+            full_name: profile.full_name || "N/A",
+            phone: profile.phone || "N/A",
+            created_at: profile.created_at,
+            referral_code: profile.referral_code || "N/A",
+            balance: walletData?.balance || 0,
+            total_deposited: walletData?.total_deposited || 0,
+            total_withdrawn: walletData?.total_withdrawn || 0,
+          };
+        })
+      );
+
+      setUsers(usersWithWallets);
     } catch (error) {
       console.error("Error fetching users:", error);
       toast.error("Failed to fetch users");
