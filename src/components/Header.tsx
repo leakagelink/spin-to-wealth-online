@@ -63,17 +63,15 @@ const Header = ({ isLoggedIn, userBalance, onAuthClick, onLogout }: HeaderProps)
                 <span className="text-green-400 font-semibold">₹{userBalance.toLocaleString()}</span>
               </div>
               
-              {isAdmin && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => navigate('/admin')} 
-                  className="border-orange-600 hover:bg-orange-700 text-orange-400 hover:text-white"
-                >
-                  <Shield className="w-4 h-4 mr-2" />
-                  Admin Panel
-                </Button>
-              )}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => navigate('/admin')} 
+                className="border-orange-600 hover:bg-orange-700 text-orange-400 hover:text-white"
+              >
+                <Shield className="w-4 h-4 mr-2" />
+                Admin Panel
+              </Button>
               
               <Button 
                 variant="outline" 
