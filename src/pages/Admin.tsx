@@ -22,37 +22,52 @@ const Admin = () => {
   const [checkingAdmin, setCheckingAdmin] = useState(true);
 
   useEffect(() => {
-    if (!loading && !user) {
-      navigate("/");
-      return;
-    }
-
-    const checkAdminRole = async () => {
-      if (!user) return;
+    const checkAdminAccess = async () => {
+      console.log("Checking admin access...", { user, loading });
       
+      if (loading) {
+        console.log("Still loading auth...");
+        return;
+      }
+
+      if (!user) {
+        console.log("No user found, redirecting to home");
+        toast.error("Please login first");
+        navigate("/");
+        return;
+      }
+
       try {
-        const { data, error } = await supabase
+        console.log("Checking admin role for user:", user.id);
+        
+        // Check if user has admin role
+        const { data: roleData, error: roleError } = await supabase
           .from("user_roles")
           .select("role")
           .eq("user_id", user.id)
           .eq("role", "admin")
-          .single();
+          .maybeSingle();
 
-        if (error && error.code !== "PGRST116") {
-          console.error("Error checking admin role:", error);
+        console.log("Admin role check result:", { roleData, roleError });
+
+        if (roleError) {
+          console.error("Error checking admin role:", roleError);
           toast.error("Error checking admin permissions");
           navigate("/");
           return;
         }
 
-        if (data) {
+        if (roleData) {
+          console.log("User is admin, granting access");
           setIsAdmin(true);
+          toast.success("Welcome to Admin Panel!");
         } else {
+          console.log("User is not admin, denying access");
           toast.error("Access denied. Admin privileges required.");
           navigate("/");
         }
       } catch (error) {
-        console.error("Error checking admin role:", error);
+        console.error("Unexpected error in admin check:", error);
         toast.error("Error checking admin permissions");
         navigate("/");
       } finally {
@@ -60,21 +75,32 @@ const Admin = () => {
       }
     };
 
-    if (user) {
-      checkAdminRole();
-    }
+    checkAdminAccess();
   }, [user, loading, navigate]);
 
   if (loading || checkingAdmin) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-black flex items-center justify-center">
-        <div className="text-white text-xl">Loading...</div>
+        <div className="text-white text-xl">
+          {loading ? "Loading user..." : "Checking admin access..."}
+        </div>
       </div>
     );
   }
 
   if (!isAdmin) {
-    return null;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-black flex items-center justify-center">
+        <div className="text-center text-white">
+          <Shield className="w-16 h-16 mx-auto mb-4 text-red-400" />
+          <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
+          <p className="text-gray-300 mb-4">You don't have admin privileges</p>
+          <Button onClick={() => navigate("/")} variant="outline">
+            Go Back to Home
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -87,13 +113,18 @@ const Admin = () => {
               Admin Panel
             </h1>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => navigate("/")}
-            className="border-gray-600 hover:bg-gray-700"
-          >
-            Back to Site
-          </Button>
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-gray-300">
+              Welcome, {user?.email}
+            </span>
+            <Button
+              variant="outline"
+              onClick={() => navigate("/")}
+              className="border-gray-600 hover:bg-gray-700"
+            >
+              Back to Site
+            </Button>
+          </div>
         </div>
 
         <Tabs defaultValue="dashboard" className="space-y-6">

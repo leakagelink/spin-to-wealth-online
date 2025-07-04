@@ -1,7 +1,10 @@
 
 import { Button } from "@/components/ui/button";
-import { Wallet, LogOut, User, UserCircle } from "lucide-react";
+import { Wallet, LogOut, User, UserCircle, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/components/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 
 interface HeaderProps {
   isLoggedIn: boolean;
@@ -12,6 +15,33 @@ interface HeaderProps {
 
 const Header = ({ isLoggedIn, userBalance, onAuthClick, onLogout }: HeaderProps) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdminRole = async () => {
+      if (!user) {
+        setIsAdmin(false);
+        return;
+      }
+
+      try {
+        const { data } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .eq("role", "admin")
+          .maybeSingle();
+
+        setIsAdmin(!!data);
+      } catch (error) {
+        console.error("Error checking admin role:", error);
+        setIsAdmin(false);
+      }
+    };
+
+    checkAdminRole();
+  }, [user]);
 
   return (
     <header className="bg-gray-900/80 backdrop-blur-lg border-b border-gray-700 sticky top-0 z-50">
@@ -32,6 +62,19 @@ const Header = ({ isLoggedIn, userBalance, onAuthClick, onLogout }: HeaderProps)
                 <Wallet className="w-4 h-4 text-green-400" />
                 <span className="text-green-400 font-semibold">₹{userBalance.toLocaleString()}</span>
               </div>
+              
+              {isAdmin && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => navigate('/admin')} 
+                  className="border-orange-600 hover:bg-orange-700 text-orange-400 hover:text-white"
+                >
+                  <Shield className="w-4 h-4 mr-2" />
+                  Admin Panel
+                </Button>
+              )}
+              
               <Button 
                 variant="outline" 
                 size="sm" 
