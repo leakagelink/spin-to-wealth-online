@@ -16,77 +16,27 @@ interface AdminSetupProps {
 const AdminSetup = ({ onAdminCreated }: AdminSetupProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [adminEmail, setAdminEmail] = useState("");
+  const [adminEmail, setAdminEmail] = useState(user?.email || "");
   const [creatingAdmin, setCreatingAdmin] = useState(false);
 
   const createAdminRole = async () => {
-    if (!user || !adminEmail) {
-      toast.error("कृपया valid email enter करें");
+    if (!user) {
+      toast.error("कृपया पहले login करें");
       return;
     }
 
     setCreatingAdmin(true);
     try {
-      console.log("Creating admin role for email:", adminEmail);
+      console.log("Creating admin role for current user:", user.id);
       
-      // First check if the email matches current user
-      if (adminEmail === user.email) {
-        console.log("Creating admin role for current user");
-        
-        const { error: roleError } = await supabase
-          .from("user_roles")
-          .insert([
-            { user_id: user.id, role: "admin" }
-          ]);
+      const { error: roleError } = await supabase.rpc('assign_admin_role', {
+        target_user_id: user.id
+      });
 
-        if (roleError) {
-          console.error("Error creating admin role:", roleError);
-          toast.error("Admin role create करने में error आया");
-          return;
-        }
-      } else {
-        // Check if user with this email exists in profiles table
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("id", adminEmail)
-          .maybeSingle();
-
-        if (profileError && profileError.code !== 'PGRST116') {
-          console.error("Error checking profiles:", profileError);
-          toast.error("User profile check करने में error आया");
-          return;
-        }
-
-        if (profileData) {
-          // Create admin role for the found user
-          const { error: roleError } = await supabase
-            .from("user_roles")
-            .insert([
-              { user_id: profileData.id, role: "admin" }
-            ]);
-
-          if (roleError) {
-            console.error("Error creating admin role:", roleError);
-            toast.error("Admin role create करने में error आया");
-            return;
-          }
-        } else {
-          // If no user found, create admin role for current user
-          console.log("User not found, creating admin role for current user");
-          
-          const { error: roleError } = await supabase
-            .from("user_roles")
-            .insert([
-              { user_id: user.id, role: "admin" }
-            ]);
-
-          if (roleError) {
-            console.error("Error creating admin role:", roleError);
-            toast.error("Admin role create करने में error आया");
-            return;
-          }
-        }
+      if (roleError) {
+        console.error("Error creating admin role:", roleError);
+        toast.error("Admin role create करने में error आया");
+        return;
       }
 
       toast.success("Admin role successfully created!");
@@ -106,28 +56,27 @@ const AdminSetup = ({ onAdminCreated }: AdminSetupProps) => {
         <CardHeader className="text-center">
           <Shield className="w-16 h-16 mx-auto mb-4 text-blue-400" />
           <CardTitle className="text-2xl text-white">Admin Setup</CardTitle>
-          <p className="text-gray-300">Admin access setup करें</p>
+          <p className="text-gray-300">Current user को admin बनाएं</p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Admin Email
+              Current Email
             </label>
             <Input
               type="email"
               value={adminEmail}
-              onChange={(e) => setAdminEmail(e.target.value)}
-              placeholder="admin email enter करें"
+              readOnly
               className="bg-gray-700/50 border-gray-600 text-white"
             />
             <p className="text-xs text-gray-400 mt-1">
-              अपना current email या किसी भी registered user का email डालें
+              इस email को admin बनाया जाएगा
             </p>
           </div>
           
           <Button 
             onClick={createAdminRole}
-            disabled={creatingAdmin || !adminEmail}
+            disabled={creatingAdmin || !user}
             className="w-full bg-gradient-to-r from-blue-500 to-cyan-400 hover:from-blue-600 hover:to-cyan-500"
           >
             <UserPlus className="w-4 h-4 mr-2" />

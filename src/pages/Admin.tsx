@@ -1,8 +1,7 @@
 
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useAuth } from "@/components/AuthContext";
-import AdminSetup from "@/components/admin/AdminSetup";
-import AdminAccessDenied from "@/components/admin/AdminAccessDenied";
+import AdminLogin from "@/components/admin/AdminLogin";
 import AdminHeader from "@/components/admin/AdminHeader";
 import AdminTabs from "@/components/admin/AdminTabs";
 
@@ -11,7 +10,7 @@ const Admin = () => {
   const { 
     isAdmin, 
     checkingAdmin, 
-    showAdminSetup, 
+    showAdminLogin, 
     loading, 
     handleAdminCreated 
   } = useAdminAuth();
@@ -26,12 +25,19 @@ const Admin = () => {
     );
   }
 
-  if (showAdminSetup && !isAdmin) {
-    return <AdminSetup onAdminCreated={handleAdminCreated} />;
+  if (showAdminLogin) {
+    return <AdminLogin />;
   }
 
   if (!isAdmin) {
-    return <AdminAccessDenied />;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-black flex items-center justify-center">
+        <div className="text-center text-white">
+          <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
+          <p className="text-gray-300 mb-4">आपके पास admin access नहीं है</p>
+        </div>
+      </div>
+    );
   }
 
   return (

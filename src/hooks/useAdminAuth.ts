@@ -10,7 +10,7 @@ export const useAdminAuth = () => {
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
   const [checkingAdmin, setCheckingAdmin] = useState(true);
-  const [showAdminSetup, setShowAdminSetup] = useState(false);
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
 
   useEffect(() => {
     const checkAdminAccess = async () => {
@@ -22,9 +22,9 @@ export const useAdminAuth = () => {
       }
 
       if (!user) {
-        console.log("No user found, redirecting to home");
-        toast.error("कृपया पहले login करें");
-        navigate("/");
+        console.log("No user found, showing admin login");
+        setShowAdminLogin(true);
+        setCheckingAdmin(false);
         return;
       }
 
@@ -43,21 +43,20 @@ export const useAdminAuth = () => {
 
         if (roleError) {
           console.error("Error checking admin role:", roleError);
-          // If there's an error checking roles, show admin setup option
-          setShowAdminSetup(true);
-          toast.info("Admin setup की जरूरत है");
+          toast.error("Admin access check करने में error आया");
+          setShowAdminLogin(true);
         } else if (roleData) {
           console.log("User is admin, granting access");
           setIsAdmin(true);
           toast.success("Admin Panel में आपका स्वागत है!");
         } else {
-          console.log("User is not admin, showing setup option");
-          setShowAdminSetup(true);
-          toast.warning("आपके पास admin access नहीं है। Admin setup करें।");
+          console.log("User is not admin, showing login");
+          setShowAdminLogin(true);
+          toast.warning("Admin access के लिए proper credentials की जरूरत है");
         }
       } catch (error) {
         console.error("Unexpected error in admin check:", error);
-        setShowAdminSetup(true);
+        setShowAdminLogin(true);
         toast.error("Admin check में error आया");
       } finally {
         setCheckingAdmin(false);
@@ -69,13 +68,13 @@ export const useAdminAuth = () => {
 
   const handleAdminCreated = () => {
     setIsAdmin(true);
-    setShowAdminSetup(false);
+    setShowAdminLogin(false);
   };
 
   return {
     isAdmin,
     checkingAdmin,
-    showAdminSetup,
+    showAdminLogin,
     loading,
     handleAdminCreated
   };
