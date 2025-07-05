@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/components/AuthContext";
@@ -88,17 +87,16 @@ const Admin = () => {
 
     setCreatingAdmin(true);
     try {
-      // Create admin role for the specified email
-      const { data: userData, error: userError } = await supabase.auth.admin.getUserByEmail(adminEmail);
+      console.log("Creating admin role for email:", adminEmail);
       
-      if (userError) {
-        console.log("User not found, attempting to create admin role for current user");
+      // First check if the email matches current user
+      if (adminEmail === user.email) {
+        console.log("Creating admin role for current user");
         
-        // If specified email doesn't exist, create admin role for current user
         const { error: roleError } = await supabase
           .from("user_roles")
           .insert([
-            { user_no: user.id, role: "admin" }
+            { user_id: user.id, role: "admin" }
           ]);
 
         if (roleError) {
@@ -107,17 +105,47 @@ const Admin = () => {
           return;
         }
       } else {
-        // Create admin role for the found user
-        const { error: roleError } = await supabase
-          .from("user_roles")
-          .insert([
-            { user_id: userData.user.id, role: "admin" }
-          ]);
+        // Check if user with this email exists in profiles table
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("id", adminEmail)
+          .maybeSingle();
 
-        if (roleError) {
-          console.error("Error creating admin role:", roleError);
-          toast.error("Admin role create करने में error आया");
+        if (profileError && profileError.code !== 'PGRST116') {
+          console.error("Error checking profiles:", profileError);
+          toast.error("User profile check करने में error आया");
           return;
+        }
+
+        if (profileData) {
+          // Create admin role for the found user
+          const { error: roleError } = await supabase
+            .from("user_roles")
+            .insert([
+              { user_id: profileData.id, role: "admin" }
+            ]);
+
+          if (roleError) {
+            console.error("Error creating admin role:", roleError);
+            toast.error("Admin role create करने में error आया");
+            return;
+          }
+        } else {
+          // If no user found, create admin role for current user
+          console.log("User not found, creating admin role for current user");
+          
+          const { error: roleError } = await supabase
+            .from("user_roles")
+            .insert([
+              { user_id: user.id, role: "admin" }
+            ]);
+
+          if (roleError) {
+            console.error("Error creating admin role:", roleError);
+            toast.error("Admin role create करने में error आया");
+            return;
+          }
         }
       }
 
