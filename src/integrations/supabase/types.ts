@@ -249,6 +249,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      sync_auth_users_to_profiles: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
