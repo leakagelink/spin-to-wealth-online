@@ -35,6 +35,12 @@ const Admin = () => {
         <div className="text-center text-white">
           <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
           <p className="text-gray-300 mb-4">आपके पास admin access नहीं है</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );

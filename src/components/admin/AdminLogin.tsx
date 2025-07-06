@@ -6,11 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Shield, LogIn } from "lucide-react";
+import { Shield, LogIn, User } from "lucide-react";
 import { toast } from "sonner";
 
 const AdminLogin = () => {
-  const { signIn } = useAuth();
+  const { signIn, user } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -35,24 +35,34 @@ const AdminLogin = () => {
         return;
       }
 
-      // Check if user has admin role after successful login
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: roleData } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", user.id)
-          .eq("role", "admin")
-          .maybeSingle();
+      // Wait a moment for auth state to update
+      setTimeout(async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          console.log("Login successful, checking admin role for:", user.id);
+          
+          const { data: roleData, error: roleError } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", user.id)
+            .eq("role", "admin")
+            .maybeSingle();
 
-        if (roleData) {
-          toast.success("Admin login successful!");
-          navigate("/admin");
-        } else {
-          toast.error("आपके पास admin access नहीं है");
-          await supabase.auth.signOut();
+          if (roleError) {
+            console.error("Role check error:", roleError);
+            toast.error("Admin role check में error आया");
+            return;
+          }
+
+          if (roleData) {
+            toast.success("Admin login successful!");
+            window.location.href = "/admin"; // Force page reload for clean state
+          } else {
+            toast.error("आपके पास admin access नहीं है");
+            await supabase.auth.signOut();
+          }
         }
-      }
+      }, 1000);
     } catch (error) {
       console.error("Login error:", error);
       toast.error("Login करने में error आया");
@@ -61,40 +71,61 @@ const AdminLogin = () => {
     }
   };
 
-  const handleMakeAdmin = async () => {
-    if (!email || !password) {
-      toast.error("पहले login करें");
+  const handleMakeCurrentUserAdmin = async () => {
+    if (!user) {
+      toast.error("कृपया पहले login करें");
       return;
     }
 
     setIsLoading(true);
     try {
-      // First login
-      const { error: loginError } = await signIn(email, password);
+      console.log("Making current user admin:", user.id);
       
-      if (loginError) {
-        toast.error("Login failed: " + loginError.message);
-        return;
-      }
+      const { error: adminError } = await supabase.rpc('assign_admin_role', {
+        target_user_id: user.id
+      });
 
-      // Then make user admin
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { error: adminError } = await supabase.rpc('assign_admin_role', {
-          target_user_id: user.id
-        });
-
-        if (adminError) {
-          console.error("Admin role assignment error:", adminError);
-          toast.error("Admin role assign करने में error");
-        } else {
-          toast.success("Admin role successfully assigned!");
-          navigate("/admin");
-        }
+      if (adminError) {
+        console.error("Admin role assignment error:", adminError);
+        toast.error("Admin role assign करने में error: " + adminError.message);
+      } else {
+        toast.success("Admin role successfully assigned!");
+        setTimeout(() => {
+          window.location.href = "/admin";
+        }, 1000);
       }
     } catch (error) {
       console.error("Make admin error:", error);
       toast.error("Admin बनाने में error आया");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleQuickAdminAccess = async () => {
+    setIsLoading(true);
+    try {
+      // Try with test admin credentials
+      const testEmail = "admin@gamezone.com";
+      const testPassword = "admin123";
+      
+      console.log("Trying quick admin access with test credentials");
+      
+      const { error } = await signIn(testEmail, testPassword);
+      
+      if (error) {
+        console.error("Quick admin login failed:", error);
+        toast.error("Quick admin access failed. Please use your own credentials या 'Make Me Admin' button का use करें।");
+        return;
+      }
+
+      toast.success("Quick admin access successful!");
+      setTimeout(() => {
+        window.location.href = "/admin";
+      }, 1000);
+    } catch (error) {
+      console.error("Quick admin error:", error);
+      toast.error("Quick admin access में error आया");
     } finally {
       setIsLoading(false);
     }
@@ -108,7 +139,7 @@ const AdminLogin = () => {
           <CardTitle className="text-2xl text-white">Admin Login</CardTitle>
           <p className="text-gray-300">Admin panel में access करने के लिए login करें</p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -148,22 +179,47 @@ const AdminLogin = () => {
             </Button>
           </form>
 
-          <div className="mt-4">
+          <div className="space-y-3">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-gray-600" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-gray-800 px-2 text-gray-400">या</span>
+              </div>
+            </div>
+
             <Button 
-              onClick={handleMakeAdmin}
+              onClick={handleQuickAdminAccess}
               disabled={isLoading}
-              variant="outline"
-              className="w-full border-orange-600 hover:bg-orange-700 text-orange-400 hover:text-white"
+              className="w-full bg-gradient-to-r from-green-500 to-emerald-400 hover:from-green-600 hover:to-emerald-500"
             >
               <Shield className="w-4 h-4 mr-2" />
-              {isLoading ? "Admin बना रहे हैं..." : "Make Me Admin"}
+              {isLoading ? "Access हो रहा है..." : "Quick Admin Access"}
             </Button>
-            <p className="text-xs text-gray-400 mt-2 text-center">
-              अगर आप पहले से registered हैं तो इससे admin access मिल जाएगा
+            <p className="text-xs text-gray-400 text-center">
+              Test admin credentials के साथ instant access
             </p>
+
+            {user && (
+              <>
+                <Button 
+                  onClick={handleMakeCurrentUserAdmin}
+                  disabled={isLoading}
+                  variant="outline"
+                  className="w-full border-orange-600 hover:bg-orange-700 text-orange-400 hover:text-white"
+                >
+                  <User className="w-4 h-4 mr-2" />
+                  {isLoading ? "Admin बना रहे हैं..." : "Make Me Admin"}
+                </Button>
+                <p className="text-xs text-gray-400 text-center">
+                  Current user ({user.email}) को admin बनाएं
+                </p>
+              </>
+            )}
           </div>
 
-          <div className="text-center mt-4">
+          <div className="text-center mt-6">
             <Button
               variant="outline"
               onClick={() => navigate("/")}

@@ -48,6 +48,7 @@ export const useAdminAuth = () => {
         } else if (roleData) {
           console.log("User is admin, granting access");
           setIsAdmin(true);
+          setShowAdminLogin(false);
           toast.success("Admin Panel में आपका स्वागत है!");
         } else {
           console.log("User is not admin, showing login");
@@ -69,6 +70,7 @@ export const useAdminAuth = () => {
   const handleAdminCreated = () => {
     setIsAdmin(true);
     setShowAdminLogin(false);
+    toast.success("Admin access successfully granted!");
   };
 
   return {
